@@ -9,35 +9,38 @@ A parser for SPL - based on parsec-combinators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 -}
 
+
 type Parser a = Parsec String () a -- for convenience
+
 
 -- utility -------------------------------
 
-keyword :: String -> Parser ()
-keyword s = string s >> spaces
-
-symbol :: Char -> Parser ()
-symbol c = char c >> spaces
+-- builds a parser that consumes following spaces
+token_ :: Parser a -> Parser a 
+token_ p = do
+  x <- p 
+  spaces
+  return x
 
 
 -- comma, semicolon, colon ---------------
 
-pComma_ = symbol ','           :: Parser ()
-pSemic  = symbol ';'           :: Parser ()
-pColon  = symbol ':'           :: Parser ()
+pComma_ = token_ $ char ','       :: Parser Char
+pSemic  = token_ $ char ';'       :: Parser Char
+pColon  = token_ $ char ':'       :: Parser Char
 
 
 -- keywords ------------------------------
 
-pElse  = keyword "else"        :: Parser ()
-pWhile = keyword "while"       :: Parser ()
-pRef   = keyword "ref"         :: Parser ()
-pIf    = keyword "if"          :: Parser ()
-pOf    = keyword "of"          :: Parser ()
-pType  = keyword "type"        :: Parser ()
-pProc  = keyword "proc"        :: Parser ()
-pArray = keyword "array"       :: Parser ()
-pVar   = keyword "var"         :: Parser ()
+pElse  = token_ $ string "else"   :: Parser String
+pWhile = token_ $ string "while"  :: Parser String
+pRef   = token_ $ string "ref"    :: Parser String
+pIf    = token_ $ string "if"     :: Parser String
+pOf    = token_ $ string "of"     :: Parser String
+pType  = token_ $ string "type"   :: Parser String
+pProc  = token_ $ string "proc"   :: Parser String
+pArray = token_ $ string "array"  :: Parser String
+pVar   = token_ $ string "var"    :: Parser String
 
 
 -- brackets, parantheses -----------------
@@ -57,9 +60,9 @@ pLT = char '<' >> return Lt  :: Parser Op
 -- integer literals ----------------------
 
 pIntLit :: Parser Int
-pIntLit = pHexLit 
-      <|> pCharLit 
-      <|> pDecLit
+pIntLit = token_ $ pHexLit 
+              <|> pCharLit 
+              <|> pDecLit
 
 pHexLit = do 
   x  <- string "0x"
