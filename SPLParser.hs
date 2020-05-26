@@ -13,6 +13,7 @@ A parser for SPL - based on parsec-combinators
 type Parser a = Parsec String () a -- for convenience
 
 
+
 -- utility -------------------------------
 
 -- builds a parser that consumes following spaces
@@ -25,32 +26,35 @@ token_ p = do
 
 -- comma, semicolon, colon ---------------
 
-pComma  = token_ $ char ','       :: Parser Char
-pSemic  = token_ $ char ';'       :: Parser Char
-pColon  = token_ $ char ':'       :: Parser Char
+pComma, pSemic, pColon :: Parser Char
+pComma  = token_ $ char ','   
+pSemic  = token_ $ char ';'    
+pColon  = token_ $ char ':'    
 
 
 -- keywords ------------------------------
 
-pElse  = token_ $ string "else"   :: Parser String
-pWhile = token_ $ string "while"  :: Parser String
-pRef   = token_ $ string "ref"    :: Parser String
-pIf    = token_ $ string "if"     :: Parser String
-pOf    = token_ $ string "of"     :: Parser String
-pType  = token_ $ string "type"   :: Parser String
-pProc  = token_ $ string "proc"   :: Parser String
-pArray = token_ $ string "array"  :: Parser String
-pVar   = token_ $ string "var"    :: Parser String
+pElse, pWhile, pRef, pIf, pOf, pType, pProc, pArray, pVar :: Parser String
+pElse  = token_ $ string "else"   
+pWhile = token_ $ string "while"  
+pRef   = token_ $ string "ref"    
+pIf    = token_ $ string "if"  
+pOf    = token_ $ string "of"     
+pType  = token_ $ string "type"   
+pProc  = token_ $ string "proc"   
+pArray = token_ $ string "array"  
+pVar   = token_ $ string "var"   
 
 
 -- brackets, parantheses -----------------
 
-pLParen = token_ $ char '('       :: Parser Char
-pRParen = token_ $ char ')'       :: Parser Char
-pLCurl  = token_ $ char '{'       :: Parser Char
-pRCurl  = token_ $ char '}'       :: Parser Char
-pLBrack = token_ $ char '['       :: Parser Char
-pRBrack = token_ $ char ']'       :: Parser Char
+pLParen, pRParen, pLCurl, pRCurl, pLBrack, pRBrack :: Parser Char
+pLParen = token_ $ char '('       
+pRParen = token_ $ char ')'      
+pLCurl  = token_ $ char '{'      
+pRCurl  = token_ $ char '}'      
+pLBrack = token_ $ char '['      
+pRBrack = token_ $ char ']'      
 
 
 -- operators
@@ -58,17 +62,18 @@ pRBrack = token_ $ char ']'       :: Parser Char
 data Op = Lt | Ne | Asgn | Plus | Slash | Star | Gt | Le | Minus | Ge | Eq 
           deriving (Eq, Show) 
 
-pLT    = token_ $ char '<' >> return Lt       :: Parser Op
-pNE    = token_ $ char '#' >> return Ne       :: Parser Op
-pASGN  = token_ $ string ":=" >> return Asgn  :: Parser Op
-pPLUS  = token_ $ char '+' >> return Plus     :: Parser Op
-pSLASH = token_ $ char '/' >> return Slash    :: Parser Op
-pSTAR  = token_ $ char '*' >> return Star     :: Parser Op
-pGT    = token_ $ char '>' >> return Gt       :: Parser Op
-pLE    = token_ $ string "<=" >> return Le    :: Parser Op
-pMINUS = token_ $ char '-' >> return Minus    :: Parser Op
-pGE    = token_ $ string ">=" >> return Ge    :: Parser Op
-pEQ    = token_ $ char '=' >> return Eq       :: Parser Op
+pLT, pNE, pASGN, pPLUS, pSLASH, pSTAR, pGT, pLE, pMINUS, pGE, pEQ :: Parser Op
+pLT    = token_ $ char '<' >> return Lt   
+pNE    = token_ $ char '#' >> return Ne       
+pASGN  = token_ $ string ":=" >> return Asgn  
+pPLUS  = token_ $ char '+' >> return Plus   
+pSLASH = token_ $ char '/' >> return Slash   
+pSTAR  = token_ $ char '*' >> return Star    
+pGT    = token_ $ char '>' >> return Gt   
+pLE    = token_ $ string "<=" >> return Le  
+pMINUS = token_ $ char '-' >> return Minus   
+pGE    = token_ $ string ">=" >> return Ge  
+pEQ    = token_ $ char '=' >> return Eq   
 
 
 -- integer literals ----------------------
