@@ -54,6 +54,16 @@ data Op = Lt | Ne | Asgn | Plus | Slash | Star | Gt | Le | Minus | Ge | Eq
           deriving (Eq, Show) 
 
 pLT = char '<' >> return Lt  :: Parser Op
+pNE = char '#' >> return Ne  :: Parser Op
+pASGN = string ":=" >> return Asgn  :: Parser Op
+pPLUS = char '+' >> return Plus  :: Parser Op
+pSLASH = char '/' >> return Slash  :: Parser Op
+pSTAR = char '*' >> return Star  :: Parser Op
+pGT = char '>' >> return Gt  :: Parser Op
+pLE = string "<=" >> return Le  :: Parser Op
+pMINUS = char '-' >> return Minus  :: Parser Op
+pGE = string ">=" >> return Ge  :: Parser Op
+pEQ = char '=' >> return Eq  :: Parser Op
 -- TODO
 
 
