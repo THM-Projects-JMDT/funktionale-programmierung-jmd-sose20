@@ -58,25 +58,25 @@ pRBrack = token_ $ char ']'       :: Parser Char
 data Op = Lt | Ne | Asgn | Plus | Slash | Star | Gt | Le | Minus | Ge | Eq 
           deriving (Eq, Show) 
 
-pLT    = char '<' >> return Lt       :: Parser Op
-pNE    = char '#' >> return Ne       :: Parser Op
-pASGN  = string ":=" >> return Asgn  :: Parser Op
-pPLUS  = char '+' >> return Plus     :: Parser Op
-pSLASH = char '/' >> return Slash    :: Parser Op
-pSTAR  = char '*' >> return Star     :: Parser Op
-pGT    = char '>' >> return Gt       :: Parser Op
-pLE    = string "<=" >> return Le    :: Parser Op
-pMINUS = char '-' >> return Minus    :: Parser Op
-pGE    = string ">=" >> return Ge    :: Parser Op
-pEQ    = char '=' >> return Eq       :: Parser Op
+pLT    = token_ $ char '<' >> return Lt       :: Parser Op
+pNE    = token_ $ char '#' >> return Ne       :: Parser Op
+pASGN  = token_ $ string ":=" >> return Asgn  :: Parser Op
+pPLUS  = token_ $ char '+' >> return Plus     :: Parser Op
+pSLASH = token_ $ char '/' >> return Slash    :: Parser Op
+pSTAR  = token_ $ char '*' >> return Star     :: Parser Op
+pGT    = token_ $ char '>' >> return Gt       :: Parser Op
+pLE    = token_ $ string "<=" >> return Le    :: Parser Op
+pMINUS = token_ $ char '-' >> return Minus    :: Parser Op
+pGE    = token_ $ string ">=" >> return Ge    :: Parser Op
+pEQ    = token_ $ char '=' >> return Eq       :: Parser Op
 
 
 -- integer literals ----------------------
 
 pIntLit :: Parser Int
 pIntLit = token_ $ pHexLit 
-              <|> pCharLit 
-              <|> pDecLit
+               <|> pCharLit 
+               <|> pDecLit
 
 pHexLit = do 
   x  <- string "0x"
