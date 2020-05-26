@@ -99,4 +99,8 @@ pDecLit = do
 
 -- identifiers ---------------------------
  
- -- TODO
+pIdent :: Parser String
+pIdent = token_ $ do
+  x <- upper <|> lower <|> oneOf "_"
+  xs <- many $ alphaNum <|> oneOf "_"
+  return (x : xs)
