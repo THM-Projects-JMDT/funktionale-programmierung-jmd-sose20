@@ -101,6 +101,6 @@ pDecLit = do
  
 pIdent :: Parser String
 pIdent = token_ $ do
-  x <- upper <|> lower <|> oneOf "_"
-  xs <- many $ alphaNum <|> oneOf "_"
+  x <- upper <|> lower <|> char '_'
+  xs <- many $ alphaNum <|> char '_'
   return (x : xs)
