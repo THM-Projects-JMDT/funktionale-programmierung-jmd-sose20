@@ -3,6 +3,8 @@ module SPLParser where
 import Text.Parsec
 import Data.Char
 
+import SPLAbsyn
+
 {-
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 A parser for SPL - based on parsec-combinators
@@ -13,73 +15,85 @@ A parser for SPL - based on parsec-combinators
 type Parser a = Parsec String () a -- for convenience
 
 
-
 -- utility -------------------------------
 
--- builds a parser that consumes following spaces
-token_ :: Parser a -> Parser a 
-token_ p = do
-  x <- p 
-  spaces
+-- consumes a sequence of any spaces except for newlines (=> only spaces in the same line)
+spacesL :: Parser () 
+spacesL = many (char ' ' <|> char '\t') >> return ()
+
+-- consumes a sequence of any spaces including newlines
+spacesN :: Parser () 
+spacesN = spaces
+
+-- returns a parser that consumes following spaces in the same line
+wsL :: Parser a -> Parser a
+wsL p = p << spacesL
+
+-- returns a parser that consumes all following spaces
+wsN :: Parser a -> Parser a 
+wsN p = p << spacesN
+
+-- execute two actions and ignore the result of the second one
+(<<) :: Monad m => m a -> m b -> m a
+f << g = do 
+  x <- f 
+  g 
   return x
 
 
 -- comma, semicolon, colon ---------------
 
 pComma, pSemic, pColon :: Parser Char
-pComma  = token_ $ char ','   
-pSemic  = token_ $ char ';'    
-pColon  = token_ $ char ':'    
+pComma  = char ','   
+pSemic  = char ';'    
+pColon  = char ':'    
 
 
 -- keywords ------------------------------
 
 pElse, pWhile, pRef, pIf, pOf, pType, pProc, pArray, pVar :: Parser String
-pElse  = token_ $ string "else"   
-pWhile = token_ $ string "while"  
-pRef   = token_ $ string "ref"    
-pIf    = token_ $ string "if"  
-pOf    = token_ $ string "of"     
-pType  = token_ $ string "type"   
-pProc  = token_ $ string "proc"   
-pArray = token_ $ string "array"  
-pVar   = token_ $ string "var"   
+pElse  = string "else"   
+pWhile = string "while"  
+pRef   = string "ref"    
+pIf    = string "if"  
+pOf    = string "of"     
+pType  = string "type"   
+pProc  = string "proc"   
+pArray = string "array"  
+pVar   = string "var"   
 
 
 -- brackets, parantheses -----------------
 
 pLParen, pRParen, pLCurl, pRCurl, pLBrack, pRBrack :: Parser Char
-pLParen = token_ $ char '('       
-pRParen = token_ $ char ')'      
-pLCurl  = token_ $ char '{'      
-pRCurl  = token_ $ char '}'      
-pLBrack = token_ $ char '['      
-pRBrack = token_ $ char ']'      
+pLParen = char '('       
+pRParen = char ')'      
+pLCurl  = char '{'      
+pRCurl  = char '}'      
+pLBrack = char '['      
+pRBrack = char ']'      
 
 
 -- operators
 
-data Op = Lt | Ne | Asgn | Plus | Slash | Star | Gt | Le | Minus | Ge | Eq 
-          deriving (Eq, Show) 
-
 pLT, pNE, pASGN, pPLUS, pSLASH, pSTAR, pGT, pLE, pMINUS, pGE, pEQ :: Parser Op
-pLT    = token_ $ char '<' >> return Lt   
-pNE    = token_ $ char '#' >> return Ne       
-pASGN  = token_ $ string ":=" >> return Asgn  
-pPLUS  = token_ $ char '+' >> return Plus   
-pSLASH = token_ $ char '/' >> return Slash   
-pSTAR  = token_ $ char '*' >> return Star    
-pGT    = token_ $ char '>' >> return Gt   
-pLE    = token_ $ string "<=" >> return Le  
-pMINUS = token_ $ char '-' >> return Minus   
-pGE    = token_ $ string ">=" >> return Ge  
-pEQ    = token_ $ char '=' >> return Eq   
+pLT    = char '<' >> return Lt   
+pNE    = char '#' >> return Ne       
+pASGN  = string ":=" >> return Asgn  
+pPLUS  = char '+' >> return Plus   
+pSLASH = char '/' >> return Slash   
+pSTAR  = char '*' >> return Star    
+pGT    = char '>' >> return Gt   
+pLE    = string "<=" >> return Le  
+pMINUS = char '-' >> return Minus   
+pGE    = string ">=" >> return Ge  
+pEQ    = char '=' >> return Eq   
 
 
 -- integer literals ----------------------
 
 pIntLit :: Parser Int
-pIntLit = token_ $ pHexLit 
+pIntLit = pHexLit 
                <|> pCharLit 
                <|> pDecLit
 
@@ -100,7 +114,60 @@ pDecLit = do
 -- identifiers ---------------------------
  
 pIdent :: Parser String
-pIdent = token_ $ do
+pIdent = do
   x <- upper <|> lower <|> char '_'
   xs <- many $ alphaNum <|> char '_'
   return (x : xs)
+
+
+-- comments ------------------------------
+
+-- parses a single comment and following spaces (e.g. "// this is a comment \n   ")
+pComment :: Parser Comment 
+pComment = do 
+  string "//"
+  cs <- manyTill anyChar (try endOfLine)
+  spacesN
+  return cs
+
+-- parses a single comment - if there is one - and following spaces 
+pCommentOptional :: Parser [Comment]
+pCommentOptional = do 
+  cm <- optionMaybe pComment
+  spacesN 
+  let cs = case cm of 
+             Nothing -> []
+             Just c  -> [c]
+  return cs
+
+-- parses a sequence of comments with optional spaces inbetween and following spaces (e.g. "// comment A \n\n // comment B  \n")
+pComments :: Parser [Comment]
+pComments = do 
+  cs <- many $ pComment
+  return cs
+
+
+-- SPL-Grammar ---------------------------
+
+pTypeDeclaration :: Parser GlobalDeclaration
+pTypeDeclaration = do 
+  pType >> spacesN
+  cs1 <- pComments 
+  id <- pIdent << spacesN
+  cs2 <- pComments 
+  pEQ >> spacesN
+  cs3 <- pComments
+  tExpr <- pTypeExpression 
+  pSemic >> spacesL
+  cs4 <- pCommentOptional
+  return $ TypeDeclaration id tExpr (cs1 ++ cs2 ++ cs3 ++ cs4)
+
+pTypeExpression :: Parser TypeExpression
+pTypeExpression = pNamedTypeExpression -- <|> pArrayTypeExpression ( => TODO)
+
+pNamedTypeExpression :: Parser TypeExpression 
+pNamedTypeExpression = do
+  id <- pIdent << spacesN
+  c1 <- pComments 
+  return $ NamedTypeExpression id
+
