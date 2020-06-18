@@ -7,8 +7,8 @@ synopsis:            Code formatter for SPL
 -- description:         
 license:             BSD3
 license-file:        LICENSE
-author:              David Martschenko
-maintainer:          david.martschenko@web.de
+author:              Jannik Lapp, Max Stephan, David Martschenko
+maintainer:          jannik.lapp@mni.thm.de, max.stephan@mni.thm.de, david.martschenko@mni.thm.de
 -- copyright:           
 -- category:            
 build-type:          Simple
