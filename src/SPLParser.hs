@@ -157,17 +157,19 @@ pTypeDeclaration = do
   cs2 <- pComments 
   pEQ >> spacesN
   cs3 <- pComments
-  tExpr <- pTypeExpression 
+  (tExpr, cs4) <- pTypeExpression 
   pSemic >> spacesL
-  cs4 <- pCommentOptional
-  return $ TypeDeclaration id tExpr (cs1 ++ cs2 ++ cs3 ++ cs4)
+  cs5 <- pCommentOptional
+  return $ TypeDeclaration id tExpr (cs1 ++ cs2 ++ cs3 ++ cs4 ++ cs5)
 
-pTypeExpression :: Parser TypeExpression
+pTypeExpression :: Parser (TypeExpression, [Comment])
 pTypeExpression = pNamedTypeExpression -- <|> pArrayTypeExpression ( => TODO)
 
-pNamedTypeExpression :: Parser TypeExpression 
+pNamedTypeExpression :: Parser (TypeExpression, [Comment])
 pNamedTypeExpression = do
   id <- pIdent << spacesN
-  c1 <- pComments 
-  return $ NamedTypeExpression id
+  cs <- pComments 
+  return $ (NamedTypeExpression id, cs)
 
+-- test example
+tDecl = "type   \n \n // comment A \n   \n vector // comment B \n \n\n = \n // comment C \n int // comment D \n\n \n ; // comment E\n // comment F\n"

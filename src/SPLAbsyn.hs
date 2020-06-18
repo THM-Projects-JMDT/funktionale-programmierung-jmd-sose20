@@ -13,8 +13,8 @@ data GlobalDeclaration    = TypeDeclaration String TypeExpression [Comment]
                           | ProcedureDeclaration String [ParameterDeclaration] [VariableDeclaration] [Statement] [Comment]
                           | GlobalComment Comment
                           deriving Show
-data TypeExpression       = ArrayTypeExpression Int TypeExpression [Comment]
-                          | NamedTypeExpression String [Commment]
+data TypeExpression       = ArrayTypeExpression Int TypeExpression
+                          | NamedTypeExpression String
                           deriving Show
 data ParameterDeclaration = ParameterDeclaration String TypeExpression Bool 
                           deriving Show
@@ -40,4 +40,3 @@ type Comment = String
 
 data Op = Lt | Ne | Asgn | Plus | Slash | Star | Gt | Le | Minus | Ge | Eq 
           deriving (Eq, Show) 
-
