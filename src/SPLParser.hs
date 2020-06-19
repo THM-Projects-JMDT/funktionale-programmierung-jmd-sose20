@@ -142,9 +142,7 @@ pCommentOptional = do
 
 -- parses a sequence of comments with optional spaces inbetween and following spaces (e.g. "// comment A \n\n // comment B  \n")
 pComments :: Parser [Comment]
-pComments = do 
-  cs <- many $ pComment
-  return cs
+pComments = many pComment
 
 
 -- SPL-Grammar ---------------------------
@@ -253,7 +251,7 @@ pParameterDeclaration = do
 
 -- Variable Declarion ---------------------------
 
-pVariableDeclaration :: Parser (VariableDeclaration)
+pVariableDeclaration :: Parser VariableDeclaration
 pVariableDeclaration = do
   pVar >> spacesN
   cs1 <- pComments 
@@ -268,10 +266,10 @@ pVariableDeclaration = do
 
 -- Statements ---------------------------
 
-pStatement :: Parser (Statement)
+pStatement :: Parser Statement
 pStatement = pWhileStatement <|> pAssignStatement-- <|> CallStatement <|> CompoundStatement <|> EmptyStatement <|> IfStatement <|> StatementComment ( => TODO)
 
-pAssignStatement :: Parser (Statement)
+pAssignStatement :: Parser Statement
 pAssignStatement = do
   (id, cs1) <- pVariable << spacesN
   cs2 <- pComments 
@@ -282,7 +280,7 @@ pAssignStatement = do
   cs5 <- pCommentOptional
   return $ AssignStatement id tExpr (cs1 ++ cs2 ++ cs3 ++ cs4 ++ cs5)
 
-pWhileStatement :: Parser (Statement)
+pWhileStatement :: Parser Statement
 pWhileStatement = do
   pWhile >> spacesN
   cs1 <- pComments
