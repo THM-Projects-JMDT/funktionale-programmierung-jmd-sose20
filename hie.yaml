@@ -1,0 +1,6 @@
+cradle:
+  cabal:
+    - path: ./src
+      component: "exe:SPL-Formatierungstool"
+    - path: ./test
+      component: "test:test-hunit-example"
