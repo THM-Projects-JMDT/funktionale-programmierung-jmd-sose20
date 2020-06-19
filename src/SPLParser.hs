@@ -149,6 +149,8 @@ pComments = do
 
 -- SPL-Grammar ---------------------------
 
+-- TypeDeclaration -----------------------
+
 pTypeDeclaration :: Parser GlobalDeclaration
 pTypeDeclaration = do 
   pType >> spacesN
@@ -162,14 +164,34 @@ pTypeDeclaration = do
   cs5 <- pCommentOptional
   return $ TypeDeclaration id tExpr (cs1 ++ cs2 ++ cs3 ++ cs4 ++ cs5)
 
+-- TypeExpression ---------------------------
+
 pTypeExpression :: Parser (TypeExpression, [Comment])
-pTypeExpression = pNamedTypeExpression -- <|> pArrayTypeExpression ( => TODO)
+pTypeExpression = pArrayTypeExpression <|> pNamedTypeExpression
 
 pNamedTypeExpression :: Parser (TypeExpression, [Comment])
 pNamedTypeExpression = do
   id <- pIdent << spacesN
   cs <- pComments 
   return $ (NamedTypeExpression id, cs)
+
+pArrayTypeExpression :: Parser (TypeExpression, [Comment])
+pArrayTypeExpression = do
+  pArray >> spacesN
+  cs1 <- pComments
+  pLBrack >> spacesN
+  cs2 <- pComments
+  idx <- pIntLit << spacesN
+  cs3 <- pComments
+  pRBrack >> spacesN
+  cs4 <- pComments
+  pOf >> spacesN
+  cs5 <- pComments
+  (tExpr, cs6) <- pTypeExpression << spacesN
+  cs7 <- pComments
+  return $ (ArrayTypeExpression idx tExpr, cs1 ++ cs2 ++ cs3 ++ cs4 ++ cs5 ++ cs6 ++ cs7)
+
+
 
 -- test example
 tDecl = "type   \n \n // comment A \n   \n vector // comment B \n \n\n = \n // comment C \n int // comment D \n\n \n ; // comment E\n // comment F\n"
