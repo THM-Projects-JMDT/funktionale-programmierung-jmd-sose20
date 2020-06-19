@@ -224,7 +224,7 @@ pNamedVariable = do
 
 -- Variable Declarion ---------------------------
 
-pVariableDeclaration :: Parser (VariableDeclaration, [Comment])
+pVariableDeclaration :: Parser (VariableDeclaration)
 pVariableDeclaration = do
   pVar >> spacesN
   cs1 <- pComments 
