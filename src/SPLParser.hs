@@ -239,6 +239,9 @@ pVariableDeclaration = do
 
 -- Statements ---------------------------
 
+pStatement :: Parser (Statement)
+pStatement = pWhileStatement <|> pAssignStatement-- <|> CallStatement <|> CompoundStatement <|> EmptyStatement <|> IfStatement <|> StatementComment ( => TODO)
+
 pAssignStatement :: Parser (Statement)
 pAssignStatement = do
   (id, cs1) <- pVariable << spacesN
@@ -250,7 +253,20 @@ pAssignStatement = do
   cs5 <- pCommentOptional
   return $ AssignStatement id tExpr (cs1 ++ cs2 ++ cs3 ++ cs4 ++ cs5)
 
+pWhileStatement :: Parser (Statement)
+pWhileStatement = do
+  pWhile >> spacesN
+  cs1 <- pComments
+  pLParen >> spacesN
+  cs2 <- pComments 
+  (tExpr, cs3) <- pExpression 
+  pRParen >> spacesN
+  cs5 <- pComments
+  stmt <- pStatement
+  cs6 <- pCommentOptional
+  return $ WhileStatement tExpr stmt (cs1 ++ cs2 ++ cs3 ++ cs5 ++ cs6)
+
 
 
 -- test example
-tDecl = "i // hallo \n :=  // hallo 2 \n okay;"
+tDecl = "while (hallo) while (hallo) i := hallo;"
