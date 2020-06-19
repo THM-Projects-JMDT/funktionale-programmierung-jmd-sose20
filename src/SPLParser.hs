@@ -171,7 +171,7 @@ pNamedTypeExpression = do
   cs <- pComments 
   return $ (NamedTypeExpression id, cs)
 
-pVariableDeclaration :: Parser (VariableDeclaration, [Comment])
+pVariableDeclaration :: Parser (VariableDeclaration)
 pVariableDeclaration = do
   pVar >> spacesN
   cs1 <- pComments 
@@ -185,5 +185,6 @@ pVariableDeclaration = do
   return $ VariableDeclaration id tExpr (cs1 ++ cs2 ++ cs3 ++ cs4 ++ cs5)
 
 
+
 -- test example
-tDecl = "type   \n \n // comment A \n   \n vector // comment B \n \n\n = \n // comment C \n int // comment D \n\n \n ; // comment E\n // comment F\n"
+tDecl = "var   \n \n // comment A \n   \n vector // comment B \n \n\n : \n // comment C \n int // comment D \n\n \n ; // comment E\n // comment F\n"
