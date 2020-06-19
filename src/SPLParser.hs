@@ -149,6 +149,10 @@ pComments = do
 
 -- SPL-Grammar ---------------------------
 
+-- Programm ---------------------------
+
+-- Global Declarion ---------------------------
+
 -- TypeDeclaration -----------------------
 
 pTypeDeclaration :: Parser GlobalDeclaration
@@ -191,6 +195,9 @@ pArrayTypeExpression = do
   cs7 <- pComments
   return $ (ArrayTypeExpression idx tExpr, cs1 ++ cs2 ++ cs3 ++ cs4 ++ cs5 ++ cs6 ++ cs7)
 
+
+-- Expression ---------------------------
+
 pExpression:: Parser (Expression, [Comment])
 pExpression = pVariableExpression -- <|> IntLiteral <|> BinaryExpression ( => TODO)
 
@@ -199,6 +206,9 @@ pVariableExpression = do
   (id, cs1) <- pVariable << spacesN
   cs2 <- pComments 
   return $ (VariableExpression id, (cs1 ++ cs2))
+
+
+-- Variables ---------------------------
 
 pVariable :: Parser (Variable, [Comment])
 pVariable = pNamedVariable -- <|> ArrayAccess ( => TODO)
@@ -209,6 +219,10 @@ pNamedVariable = do
   cs <- pComments 
   return $ (NamedVariable id, cs)
 
+
+-- ParameterDeclaration ---------------------------
+
+-- Variable Declarion ---------------------------
 
 pVariableDeclaration :: Parser (VariableDeclaration, [Comment])
 pVariableDeclaration = do
@@ -222,6 +236,8 @@ pVariableDeclaration = do
   pSemic >> spacesL
   cs5 <- pCommentOptional
   return $ VariableDeclaration id tExpr (cs1 ++ cs2 ++ cs3 ++ cs4 ++ cs5)
+
+-- Statements ---------------------------
 
 pAssignStatement :: Parser (Statement)
 pAssignStatement = do
