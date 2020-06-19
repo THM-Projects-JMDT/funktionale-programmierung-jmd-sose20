@@ -171,6 +171,25 @@ pNamedTypeExpression = do
   cs <- pComments 
   return $ (NamedTypeExpression id, cs)
 
+pExpression:: Parser (Expression, [Comment])
+pExpression = pVariableExpression -- <|> IntLiteral <|> BinaryExpression ( => TODO)
+
+pVariableExpression ::  Parser (Expression, [Comment])
+pVariableExpression = do
+  (id, cs1) <- pVariable << spacesN
+  cs2 <- pComments 
+  return $ (VariableExpression id, (cs1 ++ cs2))
+
+pVariable :: Parser (Variable, [Comment])
+pVariable = pNamedVariable -- <|> ArrayAccess ( => TODO)
+
+pNamedVariable :: Parser (Variable, [Comment])
+pNamedVariable = do
+  id <- pIdent << spacesN
+  cs <- pComments 
+  return $ (NamedVariable id, cs)
+
+
 pVariableDeclaration :: Parser (VariableDeclaration)
 pVariableDeclaration = do
   pVar >> spacesN
@@ -184,7 +203,17 @@ pVariableDeclaration = do
   cs5 <- pCommentOptional
   return $ VariableDeclaration id tExpr (cs1 ++ cs2 ++ cs3 ++ cs4 ++ cs5)
 
+pAssignStatement :: Parser (Statement)
+pAssignStatement = do
+  (id, cs1) <- pVariable << spacesN
+  cs2 <- pComments 
+  pASGN >> spacesN
+  cs3 <- pComments
+  (tExpr, cs4) <- pExpression 
+  pSemic >> spacesL
+  cs5 <- pCommentOptional
+  return $ AssignStatement id tExpr (cs1 ++ cs2 ++ cs3 ++ cs4 ++ cs5)
 
 
 -- test example
-tDecl = "var   \n \n // comment A \n   \n vector // comment B \n \n\n : \n // comment C \n int // comment D \n\n \n ; // comment E\n // comment F\n"
+tDecl = "i // hallo \n :=  // hallo 2 \n okay;"
