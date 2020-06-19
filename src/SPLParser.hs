@@ -191,7 +191,7 @@ pArrayTypeExpression = do
   cs4 <- pComments
   pOf >> spacesN
   cs5 <- pComments
-  (tExpr, cs6) <- pTypeExpression << spacesN
+  (tExpr, cs6) <- pTypeExpression
   cs7 <- pComments
   return $ (ArrayTypeExpression idx tExpr, cs1 ++ cs2 ++ cs3 ++ cs4 ++ cs5 ++ cs6 ++ cs7)
 
@@ -221,6 +221,35 @@ pNamedVariable = do
 
 
 -- ParameterDeclaration ---------------------------
+
+pParameterDeclarations :: Parser ([ParameterDeclaration], [Comment])
+pParameterDeclarations = do 
+  pLParen >> spacesN
+  cs1 <- pComments
+  (dec, cs2) <- option ([], []) pParameterDeclarationList
+  pRParen >> spacesN
+  cs3 <- pComments
+  return (dec, cs1 ++ cs2 ++ cs3)
+
+pParameterDeclarationList :: Parser ([ParameterDeclaration], [Comment])
+pParameterDeclarationList = do
+  (dec, cs1) <- pParameterDeclaration
+  decs <-  many (pComma >> spacesN >> pParameterDeclaration) << spacesN
+  cs2 <- pComments
+  return (dec : map fst decs, cs1 ++ concatMap  snd decs ++ cs2)
+
+pParameterDeclaration :: Parser (ParameterDeclaration, [Comment])
+pParameterDeclaration = do
+  ref <- option False (do {pRef; return True}) << spacesN
+  cs1 <- pComments
+  id <- pIdent << spacesN
+  cs2 <- pComments
+  pColon >> spacesN
+  cs3 <- pComments
+  (tExpr, cs4) <- pTypeExpression
+  cs5 <- pComments
+  return (ParameterDeclaration id tExpr ref, cs1 ++ cs2 ++ cs3 ++ cs4 ++ cs5)
+
 
 -- Variable Declarion ---------------------------
 
