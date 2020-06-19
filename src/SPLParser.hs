@@ -259,12 +259,11 @@ pWhileStatement = do
   cs1 <- pComments
   pLParen >> spacesN
   cs2 <- pComments 
-  (tExpr, cs3) <- pExpression 
+  (expr, cs3) <- pExpression 
   pRParen >> spacesN
   cs5 <- pComments
   stmt <- pStatement
-  cs6 <- pCommentOptional
-  return $ WhileStatement tExpr stmt (cs1 ++ cs2 ++ cs3 ++ cs5 ++ cs6)
+  return $ WhileStatement expr stmt (cs1 ++ cs2 ++ cs3 ++ cs5)
 
 
 
