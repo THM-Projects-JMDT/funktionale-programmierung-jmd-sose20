@@ -26,7 +26,7 @@ executable SPL-Formatierungstool
 test-Suite test-hunit-example
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test, src
-  main-is:             TestTest.hs
+  main-is:             ParserTest.hs
   build-depends:       base >=4.9 && <4.10, tasty, tasty-hunit, parsec >=3.1 && <3.2
   default-language:    Haskell2010
         
