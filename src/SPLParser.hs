@@ -122,19 +122,22 @@ pIdent = do
 
 -- comments ------------------------------
 
--- parses a single comment and following spaces (e.g. "// this is a comment \n   ")
+-- parses a single comment and following spaces in the next line (e.g. "// this is a comment \n   ")
 pComment :: Parser Comment 
 pComment = do 
   string "//"
   cs <- manyTill anyChar (try endOfLine)
-  spacesN
+  spacesL
   return cs
 
--- parses a single comment - if there is one - and following spaces 
+-- parses a single comment - if there is one - and following spaces in the next line
 pCommentOptional :: Parser [Comment]
 pCommentOptional = do 
-  cm <- optionMaybe pComment
-  spacesN 
+  la <- lookAhead $ optionMaybe anyChar
+  cm <- case la of 
+             Nothing   -> return Nothing
+             Just '/'  -> Just <$> pComment
+             otherwise -> newline >> spacesL >> return Nothing
   let cs = case cm of 
              Nothing -> []
              Just c  -> [c]
@@ -142,15 +145,27 @@ pCommentOptional = do
 
 -- parses a sequence of comments with optional spaces inbetween and following spaces (e.g. "// comment A \n\n // comment B  \n")
 pComments :: Parser [Comment]
-pComments = many pComment
+pComments = many $ pComment << spacesN
 
 
 -- SPL-Grammar ---------------------------
 
 -- Program -------------------------------
 
+pProgram :: Parser [GlobalDeclaration]
+pProgram = many $ pGlobalEmptyLine <|> pGlobalComment <|> pTypeDeclaration {-- <|> pProcedureDeclaration --}
 
--- Global Declaration --------------------
+
+-- Global Empty Line --------------------
+
+pGlobalEmptyLine :: Parser GlobalDeclaration
+pGlobalEmptyLine = newline >> spacesL >> return GlobalEmptyLine
+
+
+-- Global Comment
+
+pGlobalComment :: Parser GlobalDeclaration
+pGlobalComment = GlobalComment <$> pComment
 
 
 -- Type Declaration -----------------------
