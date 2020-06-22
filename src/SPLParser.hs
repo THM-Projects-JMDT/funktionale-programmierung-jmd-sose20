@@ -249,7 +249,7 @@ pParameterDeclaration = do
   return (ParameterDeclaration id tExpr ref, cs1 ++ cs2 ++ cs3 ++ cs4 ++ cs5)
 
 
--- Variable Declarion ---------------------------
+-- Variable Declaration ---------------------------
 
 pVariableDeclaration :: Parser VariableDeclaration
 pVariableDeclaration = do
@@ -263,6 +263,7 @@ pVariableDeclaration = do
   pSemic >> spacesL
   cs5 <- pCommentOptional
   return $ VariableDeclaration id tExpr (cs1 ++ cs2 ++ cs3 ++ cs4 ++ cs5)
+
 
 -- Statements ---------------------------
 
