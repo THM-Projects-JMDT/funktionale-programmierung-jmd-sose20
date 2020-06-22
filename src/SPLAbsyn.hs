@@ -13,7 +13,7 @@ data GlobalDeclaration    = TypeDeclaration String TypeExpression [Comment]
                           | ProcedureDeclaration String [ParameterDeclaration] [VariableDeclaration] [Statement] [Comment]
                           | GlobalComment Comment
                           deriving (Eq, Show)
-data TypeExpression       = ArrayTypeExpression Int TypeExpression
+data TypeExpression       = ArrayTypeExpression IntString TypeExpression
                           | NamedTypeExpression String
                           deriving (Eq, Show)
 data ParameterDeclaration = ParameterDeclaration String TypeExpression Bool 
@@ -32,11 +32,12 @@ data Variable             = NamedVariable String
                           | ArrayAccess Variable Expression
                           deriving (Eq, Show)
 data Expression           = VariableExpression Variable
-                          | IntLiteral Int
+                          | IntLiteral IntString
                           | BinaryExpression Op Expression Expression
                           deriving (Eq, Show)
 
 type Comment = String
+type IntString = String
 
 data Op = Lt | Ne | Asgn | Plus | Slash | Star | Gt | Le | Minus | Ge | Eq 
           deriving (Eq, Show) 

@@ -92,7 +92,7 @@ pEQ    = char '=' >> return Eq
 
 -- integer literals ----------------------
 
-pIntLit :: Parser Int
+pIntLit :: Parser IntString
 pIntLit = pHexLit 
                <|> pCharLit 
                <|> pDecLit
@@ -100,15 +100,15 @@ pIntLit = pHexLit
 pHexLit = do 
   x  <- string "0x"
   xs <- many1 hexDigit
-  return $ read (x ++ xs)
+  return $ x ++ xs
 
 pCharLit = do 
   n <- between (char '\'') (char '\'') anyChar
-  return $ ord n
+  return $ "'" ++ [n] ++ "'"
 
 pDecLit = do 
   ds <- many1 digit 
-  return $ read ds
+  return $ ds
 
 
 -- identifiers ---------------------------
