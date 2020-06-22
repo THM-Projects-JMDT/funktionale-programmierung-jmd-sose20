@@ -8,18 +8,18 @@ SPL-AST structure - extended with comments
 
 
 data Program              = Program [GlobalDeclaration]
-                          deriving Show 
+                          deriving (Eq, Show) 
 data GlobalDeclaration    = TypeDeclaration String TypeExpression [Comment]
                           | ProcedureDeclaration String [ParameterDeclaration] [VariableDeclaration] [Statement] [Comment]
                           | GlobalComment Comment
-                          deriving Show
+                          deriving (Eq, Show)
 data TypeExpression       = ArrayTypeExpression Int TypeExpression
                           | NamedTypeExpression String
-                          deriving Show
+                          deriving (Eq, Show)
 data ParameterDeclaration = ParameterDeclaration String TypeExpression Bool 
-                          deriving Show
+                          deriving (Eq, Show)
 data VariableDeclaration  = VariableDeclaration String TypeExpression [Comment]
-                          deriving Show
+                          deriving (Eq, Show)
 data Statement            = AssignStatement Variable Expression [Comment]
                           | CallStatement String [Expression] [Comment]
                           | CompoundStatement [Statement] [Comment]
@@ -27,14 +27,14 @@ data Statement            = AssignStatement Variable Expression [Comment]
                           | IfStatement Expression Statement Statement [Comment]
                           | WhileStatement Expression Statement [Comment]
                           | StatementComment Comment
-                          deriving Show
+                          deriving (Eq, Show)
 data Variable             = NamedVariable String
                           | ArrayAccess Variable Expression
-                          deriving Show
+                          deriving (Eq, Show)
 data Expression           = VariableExpression Variable
                           | IntLiteral Int
                           | BinaryExpression Op Expression Expression
-                          deriving Show
+                          deriving (Eq, Show)
 
 type Comment = String
 
