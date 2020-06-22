@@ -147,11 +147,13 @@ pComments = many pComment
 
 -- SPL-Grammar ---------------------------
 
--- Programm ---------------------------
+-- Program -------------------------------
 
--- Global Declarion ---------------------------
 
--- TypeDeclaration -----------------------
+-- Global Declaration --------------------
+
+
+-- Type Declaration -----------------------
 
 pTypeDeclaration :: Parser GlobalDeclaration
 pTypeDeclaration = do 
@@ -166,7 +168,8 @@ pTypeDeclaration = do
   cs5 <- pCommentOptional
   return $ TypeDeclaration id tExpr (cs1 ++ cs2 ++ cs3 ++ cs4 ++ cs5)
 
--- TypeExpression ---------------------------
+
+-- TypeExpression ------------------------
 
 pTypeExpression :: Parser (TypeExpression, [Comment])
 pTypeExpression = pArrayTypeExpression <|> pNamedTypeExpression
@@ -194,7 +197,7 @@ pArrayTypeExpression = do
   return $ (ArrayTypeExpression idx tExpr, cs1 ++ cs2 ++ cs3 ++ cs4 ++ cs5 ++ cs6 ++ cs7)
 
 
--- Expression ---------------------------
+-- Expression ----------------------------
 
 pExpression:: Parser (Expression, [Comment])
 pExpression = pVariableExpression -- <|> IntLiteral <|> BinaryExpression ( => TODO)
@@ -206,7 +209,7 @@ pVariableExpression = do
   return $ (VariableExpression id, (cs1 ++ cs2))
 
 
--- Variables ---------------------------
+-- Variables -----------------------------
 
 pVariable :: Parser (Variable, [Comment])
 pVariable = pNamedVariable -- <|> ArrayAccess ( => TODO)
@@ -218,7 +221,7 @@ pNamedVariable = do
   return $ (NamedVariable id, cs)
 
 
--- ParameterDeclaration ---------------------------
+-- Parameter Declaration -----------------
 
 pParameterDeclarations :: Parser ([ParameterDeclaration], [Comment])
 pParameterDeclarations = do 
@@ -249,7 +252,7 @@ pParameterDeclaration = do
   return (ParameterDeclaration id tExpr ref, cs1 ++ cs2 ++ cs3 ++ cs4 ++ cs5)
 
 
--- Variable Declaration ---------------------------
+-- Variable Declaration ------------------
 
 pVariableDeclaration :: Parser VariableDeclaration
 pVariableDeclaration = do
@@ -265,7 +268,7 @@ pVariableDeclaration = do
   return $ VariableDeclaration id tExpr (cs1 ++ cs2 ++ cs3 ++ cs4 ++ cs5)
 
 
--- Statements ---------------------------
+-- Statements ----------------------------
 
 pStatement :: Parser Statement
 pStatement = pWhileStatement <|> pAssignStatement-- <|> CallStatement <|> CompoundStatement <|> EmptyStatement <|> IfStatement <|> StatementComment ( => TODO)
