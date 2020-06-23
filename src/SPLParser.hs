@@ -375,5 +375,18 @@ pElseStatement = do
   stmt <- pStatement
   return $ (stmt, cs1)
 
+pCallStatement :: Parser Statement
+pCallStatement = do 
+  id <- pIdent << spacesN
+  cs2 <- pComments 
+  pLParen >> spacesN
+  cs3 <- pComments
+  (expr, cs4) <- pExpression
+  exprs <-  many (pComma >> spacesN >> pExpression << spacesN)
+  cs5 <- pComments
+  pRParen >> spacesN
+  cs6 <- pComments
+  return $ CallStatement id (expr : map fst exprs) (cs2 ++ cs3 ++ cs4 ++ concatMap snd exprs ++ cs5 ++cs6)
+
 -- test example
-tDecl = "if(10) // hallo \n i := 20;\n"
+tDecl = "hallo(10,20 // hallo \n,30)"
