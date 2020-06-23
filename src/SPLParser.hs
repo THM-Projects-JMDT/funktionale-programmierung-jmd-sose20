@@ -308,8 +308,8 @@ pStatement = pWhileStatement
          <|> pCompoundStatement 
          <|> pEmptyStatement 
          <|> pStatementComment 
-      -- <|> pCallStatement 
-      -- <|> pIfStatement ( => TODO)
+         <|> pIfStatement 
+      -- <|> pCallStatement ( => TODO)
 
 pAssignStatement :: Parser Statement
 pAssignStatement = do
