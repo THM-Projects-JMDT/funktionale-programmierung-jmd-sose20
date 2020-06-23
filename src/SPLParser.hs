@@ -309,7 +309,7 @@ pStatement = pWhileStatement
          <|> pEmptyStatement 
          <|> pStatementComment 
          <|> pIfStatement 
-      -- <|> pCallStatement ( => TODO)
+         <|> pCallStatement
 
 pAssignStatement :: Parser Statement
 pAssignStatement = do
@@ -389,4 +389,4 @@ pCallStatement = do
   return $ CallStatement id (expr : map fst exprs) (cs2 ++ cs3 ++ cs4 ++ concatMap snd exprs ++ cs5 ++cs6)
 
 -- test example
-tDecl = "hallo(10,20 // hallo \n,30)"
+tDecl = "hallo(10,// hallo \n20,30)"
