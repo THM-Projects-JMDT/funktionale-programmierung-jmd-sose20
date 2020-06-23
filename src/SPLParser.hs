@@ -360,13 +360,13 @@ pIfStatement = do
   cs2 <- pComments 
   (expr, cs3) <- pExpression 
   pRParen >> spacesN
-  cs5 <- pComments
+  cs4 <- pComments
   stmt <- pStatement
   optElse <- optionMaybe pElseStatement
-  let (optstmt, cs6) = case optElse of 
+  let (optstmt, cs5) = case optElse of 
                       Nothing             -> (Nothing, [])
                       Just (stmt2, optcs) -> (Just stmt2, optcs)
-  return $ IfStatement expr stmt optstmt(cs1 ++ cs2 ++ cs3 ++ cs5 ++ cs6)
+  return $ IfStatement expr stmt optstmt(cs1 ++ cs2 ++ cs3 ++ cs4 ++ cs5)
 
 pElseStatement  :: Parser (Statement, [Comment])
 pElseStatement = do 
