@@ -12,6 +12,7 @@ data Program              = Program [GlobalDeclaration]
 data GlobalDeclaration    = TypeDeclaration String TypeExpression [Comment]
                           | ProcedureDeclaration String [ParameterDeclaration] [VariableDeclaration] [Statement] [Comment]
                           | GlobalComment Comment
+                          | GlobalEmptyLine
                           deriving (Eq, Show)
 data TypeExpression       = ArrayTypeExpression IntString TypeExpression
                           | NamedTypeExpression String
@@ -27,6 +28,7 @@ data Statement            = AssignStatement Variable Expression [Comment]
                           | IfStatement Expression Statement Statement [Comment]
                           | WhileStatement Expression Statement [Comment]
                           | StatementComment Comment
+                          | StatementEmptyLine
                           deriving (Eq, Show)
 data Variable             = NamedVariable String
                           | ArrayAccess Variable Expression

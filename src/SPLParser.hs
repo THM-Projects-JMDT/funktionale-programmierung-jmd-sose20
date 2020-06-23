@@ -122,19 +122,22 @@ pIdent = do
 
 -- comments ------------------------------
 
--- parses a single comment and following spaces (e.g. "// this is a comment \n   ")
+-- parses a single comment and following spaces in the next line (e.g. "// this is a comment \n   ")
 pComment :: Parser Comment 
 pComment = do 
   string "//"
   cs <- manyTill anyChar (try endOfLine)
-  spacesN
+  spacesL
   return cs
 
--- parses a single comment - if there is one - and following spaces 
+-- parses a single comment - if there is one - and following spaces in the next line
 pCommentOptional :: Parser [Comment]
 pCommentOptional = do 
-  cm <- optionMaybe pComment
-  spacesN 
+  la <- lookAhead $ optionMaybe anyChar
+  cm <- case la of 
+             Nothing   -> return Nothing
+             Just '/'  -> Just <$> pComment
+             otherwise -> newline >> spacesL >> return Nothing
   let cs = case cm of 
              Nothing -> []
              Just c  -> [c]
@@ -142,16 +145,30 @@ pCommentOptional = do
 
 -- parses a sequence of comments with optional spaces inbetween and following spaces (e.g. "// comment A \n\n // comment B  \n")
 pComments :: Parser [Comment]
-pComments = many pComment
+pComments = many $ pComment << spacesN
 
 
 -- SPL-Grammar ---------------------------
 
--- Programm ---------------------------
+-- Program -------------------------------
 
--- Global Declarion ---------------------------
+pProgram :: Parser [GlobalDeclaration]
+pProgram = many $ pGlobalEmptyLine <|> pGlobalComment <|> pTypeDeclaration {-- <|> pProcedureDeclaration --}
 
--- TypeDeclaration -----------------------
+
+-- Global Empty Line --------------------
+
+pGlobalEmptyLine :: Parser GlobalDeclaration
+pGlobalEmptyLine = newline >> spacesL >> return GlobalEmptyLine
+
+
+-- Global Comment
+
+pGlobalComment :: Parser GlobalDeclaration
+pGlobalComment = GlobalComment <$> pComment
+
+
+-- Type Declaration -----------------------
 
 pTypeDeclaration :: Parser GlobalDeclaration
 pTypeDeclaration = do 
@@ -166,7 +183,8 @@ pTypeDeclaration = do
   cs5 <- pCommentOptional
   return $ TypeDeclaration id tExpr (cs1 ++ cs2 ++ cs3 ++ cs4 ++ cs5)
 
--- TypeExpression ---------------------------
+
+-- TypeExpression ------------------------
 
 pTypeExpression :: Parser (TypeExpression, [Comment])
 pTypeExpression = pArrayTypeExpression <|> pNamedTypeExpression
@@ -194,7 +212,7 @@ pArrayTypeExpression = do
   return $ (ArrayTypeExpression idx tExpr, cs1 ++ cs2 ++ cs3 ++ cs4 ++ cs5 ++ cs6 ++ cs7)
 
 
--- Expression ---------------------------
+-- Expression ----------------------------
 
 pExpression:: Parser (Expression, [Comment])
 pExpression = pVariableExpression -- <|> IntLiteral <|> BinaryExpression ( => TODO)
@@ -206,7 +224,7 @@ pVariableExpression = do
   return $ (VariableExpression id, (cs1 ++ cs2))
 
 
--- Variables ---------------------------
+-- Variables -----------------------------
 
 pVariable :: Parser (Variable, [Comment])
 pVariable = pNamedVariable -- <|> ArrayAccess ( => TODO)
@@ -218,7 +236,7 @@ pNamedVariable = do
   return $ (NamedVariable id, cs)
 
 
--- ParameterDeclaration ---------------------------
+-- Parameter Declaration -----------------
 
 pParameterDeclarations :: Parser ([ParameterDeclaration], [Comment])
 pParameterDeclarations = do 
@@ -249,7 +267,7 @@ pParameterDeclaration = do
   return (ParameterDeclaration id tExpr ref, cs1 ++ cs2 ++ cs3 ++ cs4 ++ cs5)
 
 
--- Variable Declaration ---------------------------
+-- Variable Declaration ------------------
 
 pVariableDeclaration :: Parser VariableDeclaration
 pVariableDeclaration = do
@@ -265,7 +283,7 @@ pVariableDeclaration = do
   return $ VariableDeclaration id tExpr (cs1 ++ cs2 ++ cs3 ++ cs4 ++ cs5)
 
 
--- Statements ---------------------------
+-- Statements ----------------------------
 
 pStatement :: Parser Statement
 pStatement = pWhileStatement <|> pAssignStatement-- <|> CallStatement <|> CompoundStatement <|> EmptyStatement <|> IfStatement <|> StatementComment ( => TODO)
