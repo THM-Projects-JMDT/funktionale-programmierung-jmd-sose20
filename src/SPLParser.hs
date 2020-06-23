@@ -96,9 +96,9 @@ pBiOperator = pLT <|> pNE <|> pPLUS <|> pSLASH <|>  pSTAR <|> pGT <|> pLE <|> pM
 -- integer literals ----------------------
 
 pIntLit :: Parser IntString
-pIntLit = pHexLit 
-               <|> pCharLit 
-               <|> pDecLit
+pIntLit = try pHexLit 
+          <|> pCharLit 
+          <|> pDecLit
 
 pHexLit = do 
   x  <- string "0x"
