@@ -244,7 +244,7 @@ pBinaryExpression = do
 -- Variables -----------------------------
 
 pVariable :: Parser (Variable, [Comment])
-pVariable = pNamedVariable -- <|> ArrayAccess ( => TODO)
+pVariable =  try pArrayAccess <|> pNamedVariable
 
 pNamedVariable :: Parser (Variable, [Comment])
 pNamedVariable = do
@@ -252,6 +252,22 @@ pNamedVariable = do
   cs <- pComments 
   return $ (NamedVariable id, cs)
 
+pArrayAccess :: Parser (Variable, [Comment])
+pArrayAccess = do 
+  (nVar, cs1) <- pNamedVariable
+  cs2 <- pComments
+  (exprs, css) <- unzip <$> many1 pAccess
+  let acc = foldl ArrayAccess nVar exprs
+  return (acc, cs1 ++ cs2 ++ concat css)
+
+pAccess :: Parser (Expression, [Comment])
+pAccess = do 
+  pLBrack >> spacesN
+  cs1 <- pComments 
+  (expr, cs2) <- pExpression
+  pRBrack >> spacesN
+  cs3 <- pComments
+  return (expr, cs1 ++ cs2 ++ cs3)
 
 -- Parameter Declaration -----------------
 
@@ -390,3 +406,5 @@ pCallStatement = do
 
 -- test example
 tDecl = "hallo(10,// hallo \n20,30)"
+
+tAcc = "arr\n  \n//A\n[//B\n \n 4\n//C\n ]//D\n\n[5] //E\n//F\n"
