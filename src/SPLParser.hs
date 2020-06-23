@@ -1,6 +1,7 @@
 module SPLParser where
 
 import Text.Parsec
+import Text.Parsec.Expr
 import Data.Char
 
 import SPLAbsyn
@@ -214,10 +215,35 @@ pArrayTypeExpression = do
   return $ (ArrayTypeExpression idx tExpr, cs1 ++ cs2 ++ cs3 ++ cs4 ++ cs5 ++ cs6 ++ cs7)
 
 
+-- Expression Utilities ------------------
+
+-- TODO: comments after the operator do not work yet 
+binary s o = Infix (string s >> spacesN >> return (getBinExpr o)) AssocLeft
+prefix s f = Prefix  (string s >> spacesN >> return f)  
+
+-- TODO: may have to be solved differently to distinguish between '0 - expr' and '- expr'  
+neg :: (Expression, [Comment]) -> (Expression, [Comment])
+neg (e, c) = (BinaryExpression Minus (IntLiteral "0") e, c)
+
+getBinExpr :: Op -> (Expression, [Comment]) -> (Expression, [Comment]) -> (Expression, [Comment])
+getBinExpr o e1 e2 = (BinaryExpression o (fst e1) (fst e2), snd e1 ++ snd e2)
+
 -- Expression ----------------------------
 
-pExpression:: Parser (Expression, [Comment])
-pExpression = pIntLiteral <|> pVariableExpression --pBinaryExpression <|>
+pExpression :: Parser (Expression, [Comment])
+pExpression    = buildExpressionParser table term
+
+term :: Parser (Expression, [Comment])
+-- TODO: If a parenthesized expression is at the beginning, the rest of the expression is ignored 
+term = between pLParen pRParen pExpression <|> pVariableExpression <|> pIntLiteral
+
+table   = [ 
+            [prefix "-" neg, prefix "+" id],
+            [binary "*" Star, binary "/" Slash],
+            [binary "+" Plus, binary "-" Minus],
+            -- TODO: <= and >= are not working => unexpected "="
+            [binary "<" Lt, binary ">" Gt, binary "<=" Le, binary ">=" Ge, binary "#" Ne, binary "=" Eq]
+          ]
 
 pVariableExpression ::  Parser (Expression, [Comment])
 pVariableExpression = do
@@ -231,16 +257,6 @@ pIntLiteral = do
   cs1 <- pComments
   return $ (IntLiteral inlit, cs1)
 
-pBinaryExpression :: Parser (Expression, [Comment])
-pBinaryExpression = do
-  (expr, cs1) <- pExpression << spacesN
-  cs2 <- pComments
-  op <- pBiOperator << spacesN
-  cs3 <- pComments
-  (expr2, cs4) <- pExpression << spacesN
-  cs5 <- pComments
-  return $ (BinaryExpression op expr expr2, (cs1 ++ cs2 ++ cs3 ++ cs4 ++ cs5))
-  
 -- Variables -----------------------------
 
 pVariable :: Parser (Variable, [Comment])
