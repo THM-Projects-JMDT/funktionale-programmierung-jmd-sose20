@@ -217,7 +217,7 @@ pArrayTypeExpression = do
 -- Expression ----------------------------
 
 pExpression:: Parser (Expression, [Comment])
-pExpression = pBinaryExpression <|> pIntLiteral <|> pVariableExpression 
+pExpression = pIntLiteral <|> pVariableExpression --pBinaryExpression <|>
 
 pVariableExpression ::  Parser (Expression, [Comment])
 pVariableExpression = do
@@ -306,7 +306,10 @@ pStatement :: Parser Statement
 pStatement = pWhileStatement 
          <|> pAssignStatement 
          <|> pCompoundStatement 
-      -- <|> pCallStatement <|> pEmptyStatement <|> pIfStatement <|> pStatementComment ( => TODO)
+         <|> pEmptyStatement 
+         <|> pStatementComment 
+      -- <|> pCallStatement 
+      -- <|> pIfStatement ( => TODO)
 
 pAssignStatement :: Parser Statement
 pAssignStatement = do
@@ -338,9 +341,39 @@ pCompoundStatement = do
   stmt <- many pStatement << spacesN
   pRCurl >> spacesN
   cs3 <- pCommentOptional
-  
   return $ CompoundStatement stmt (cs1 ++cs3)
 
+pEmptyStatement :: Parser Statement 
+pEmptyStatement = do 
+  pSemic  >> spacesL
+  cs1 <- pCommentOptional
+  return $ EmptyStatement cs1
+
+pStatementComment :: Parser Statement
+pStatementComment = StatementComment <$> pComment
+
+pIfStatement :: Parser Statement
+pIfStatement = do
+  pIf >> spacesN
+  cs1 <- pComments
+  pLParen >> spacesN
+  cs2 <- pComments 
+  (expr, cs3) <- pExpression 
+  pRParen >> spacesN
+  cs5 <- pComments
+  stmt <- pStatement
+  optElse <- optionMaybe pElseStatement
+  let (optstmt, cs6) = case optElse of 
+                      Nothing             -> (Nothing, [])
+                      Just (stmt2, optcs) -> (Just stmt2, optcs)
+  return $ IfStatement expr stmt optstmt(cs1 ++ cs2 ++ cs3 ++ cs5 ++ cs6)
+
+pElseStatement  :: Parser (Statement, [Comment])
+pElseStatement = do 
+  pElse >> spacesN
+  cs1 <- pComments
+  stmt <- pStatement
+  return $ (stmt, cs1)
 
 -- test example
-tDecl = "{i := hallo < 20;\n j := 30;\n} // hallo"
+tDecl = "if(10) // hallo \n i := 20;\n"

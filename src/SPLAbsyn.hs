@@ -25,7 +25,7 @@ data Statement            = AssignStatement Variable Expression [Comment]
                           | CallStatement String [Expression] [Comment]
                           | CompoundStatement [Statement] [Comment]
                           | EmptyStatement [Comment]
-                          | IfStatement Expression Statement Statement [Comment]
+                          | IfStatement Expression Statement (Maybe Statement) [Comment]
                           | WhileStatement Expression Statement [Comment]
                           | StatementComment Comment
                           | StatementEmptyLine
