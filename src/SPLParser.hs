@@ -89,6 +89,8 @@ pMINUS = char '-' >> return Minus
 pGE    = string ">=" >> return Ge  
 pEQ    = char '=' >> return Eq   
 
+pBiOperator :: Parser Op
+pBiOperator = pLT <|> pNE <|> pPLUS <|> pSLASH <|>  pSTAR <|> pGT <|> pLE <|> pMINUS <|> pGE <|> pEQ
 
 -- integer literals ----------------------
 
@@ -215,7 +217,7 @@ pArrayTypeExpression = do
 -- Expression ----------------------------
 
 pExpression:: Parser (Expression, [Comment])
-pExpression = pVariableExpression -- <|> IntLiteral <|> BinaryExpression ( => TODO)
+pExpression = pBinaryExpression <|> pIntLiteral <|> pVariableExpression 
 
 pVariableExpression ::  Parser (Expression, [Comment])
 pVariableExpression = do
@@ -223,7 +225,22 @@ pVariableExpression = do
   cs2 <- pComments 
   return $ (VariableExpression id, (cs1 ++ cs2))
 
+pIntLiteral :: Parser (Expression, [Comment])
+pIntLiteral = do
+  inlit <- pIntLit << spacesN
+  cs1 <- pComments
+  return $ (IntLiteral inlit, cs1)
 
+pBinaryExpression :: Parser (Expression, [Comment])
+pBinaryExpression = do
+  (expr, cs1) <- pExpression << spacesN
+  cs2 <- pComments
+  op <- pBiOperator << spacesN
+  cs3 <- pComments
+  (expr2, cs4) <- pExpression << spacesN
+  cs5 <- pComments
+  return $ (BinaryExpression op expr expr2, (cs1 ++ cs2 ++ cs3 ++ cs4 ++ cs5))
+  
 -- Variables -----------------------------
 
 pVariable :: Parser (Variable, [Comment])
@@ -286,7 +303,10 @@ pVariableDeclaration = do
 -- Statements ----------------------------
 
 pStatement :: Parser Statement
-pStatement = pWhileStatement <|> pAssignStatement-- <|> CallStatement <|> CompoundStatement <|> EmptyStatement <|> IfStatement <|> StatementComment ( => TODO)
+pStatement = pWhileStatement 
+         <|> pAssignStatement 
+         <|> pCompoundStatement 
+      -- <|> pCallStatement <|> pEmptyStatement <|> pIfStatement <|> pStatementComment ( => TODO)
 
 pAssignStatement :: Parser Statement
 pAssignStatement = do
@@ -317,12 +337,10 @@ pCompoundStatement = do
   cs1 <- pComments
   stmt <- many pStatement << spacesN
   pRCurl >> spacesN
-  -- bin mir unsicher ob wir das hier haben wollen, ich würde sagen ja, entspräche einem kommentar nach den {}
   cs3 <- pCommentOptional
   
   return $ CompoundStatement stmt (cs1 ++cs3)
 
 
-
 -- test example
-tDecl = "{ //ike bins \n i := hallo; // hallo \n j:=ich; //hallo2 \n} //ike compund \n"
+tDecl = "{i := hallo < 20;\n j := 30;\n} // hallo"
