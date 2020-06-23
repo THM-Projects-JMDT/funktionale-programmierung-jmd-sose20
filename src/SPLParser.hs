@@ -91,7 +91,7 @@ pGE    = string ">=" >> return Ge
 pEQ    = char '=' >> return Eq   
 
 pBiOperator :: Parser Op
-pBiOperator = pLT <|> pNE <|> pPLUS <|> pSLASH <|>  pSTAR <|> pGT <|> pLE <|> pMINUS <|> pGE <|> pEQ
+pBiOperator = try pLE <|> try pGE <|> pLT <|> pNE <|> pPLUS <|> pSLASH <|>  pSTAR <|> pGT <|> pMINUS <|> pEQ
 
 -- integer literals ----------------------
 
