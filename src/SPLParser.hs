@@ -293,7 +293,18 @@ pWhileStatement = do
   stmt <- pStatement
   return $ WhileStatement expr stmt (cs1 ++ cs2 ++ cs3 ++ cs5)
 
+pCompoundStatement :: Parser Statement
+pCompoundStatement = do
+  pLCurl  >> spacesN
+  cs1 <- pComments
+  stmt <- many pStatement << spacesN
+  pRCurl >> spacesN
+  -- bin mir unsicher ob wir das hier haben wollen, ich würde sagen ja, entspräche einem kommentar nach den {}
+  cs3 <- pCommentOptional
+  
+  return $ CompoundStatement stmt (cs1 ++cs3)
+
 
 
 -- test example
-tDecl = "while (hallo) while (hallo) i := hallo;"
+tDecl = "{ //ike bins \n i := hallo; // hallo \n j:=ich; //hallo2 \n} //ike compund \n"
