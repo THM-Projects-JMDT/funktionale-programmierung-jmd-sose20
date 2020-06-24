@@ -162,7 +162,7 @@ pComments = many $ pComment << spacesN
 -- Program -------------------------------
 
 pProgram :: Parser [GlobalDeclaration]
-pProgram = many $ pGlobalEmptyLine <|> pGlobalComment <|> pTypeDeclaration {-- <|> pProcedureDeclaration --}
+pProgram = many $ pGlobalEmptyLine <|> pGlobalComment <|> pTypeDeclaration <|> pProcedureDeclaration
 
 
 -- Global Empty Line --------------------
@@ -192,6 +192,22 @@ pTypeDeclaration = do
   cs5 <- pCommentOptional
   return $ TypeDeclaration id tExpr (cs1 ++ cs2 ++ cs3 ++ cs4 ++ cs5)
 
+-- Procedure Declaration -----------------
+
+pProcedureDeclaration :: Parser GlobalDeclaration
+pProcedureDeclaration = do
+  pProc >> spacesN
+  cs1 <- pComments
+  id <- pIdent << spacesN
+  cs2 <- pComments
+  (parm, cs3) <- pParameterDeclarations
+  pLCurl >> spacesN
+  cs4 <- pComments
+  vars <- option []  $ many pVariableDeclaration
+  stmd <- option []  $ many pStatement
+  pRCurl >> spacesL
+  cs5 <- pCommentOptional
+  return $ (ProcedureDeclaration id parm vars stmd cs1)
 
 -- TypeExpression ------------------------
 
