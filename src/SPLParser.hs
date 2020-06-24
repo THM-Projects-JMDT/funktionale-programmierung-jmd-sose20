@@ -75,7 +75,7 @@ pLBrack = char '['
 pRBrack = char ']'      
 
 
--- operators
+-- operators -----------------------------
 
 pLT, pNE, pASGN, pPLUS, pSLASH, pSTAR, pGT, pLE, pMINUS, pGE, pEQ :: Parser Op
 pLT    = char '<' >> return Lt   
@@ -88,10 +88,16 @@ pGT    = char '>' >> return Gt
 pLE    = string "<=" >> return Le  
 pMINUS = char '-' >> return Minus   
 pGE    = string ">=" >> return Ge  
-pEQ    = char '=' >> return Eq   
+pEQ    = char '=' >> return Eq
 
-pBiOperator :: Parser Op
-pBiOperator = try pLE <|> try pGE <|> pLT <|> pNE <|> pPLUS <|> pSLASH <|>  pSTAR <|> pGT <|> pMINUS <|> pEQ
+pOpPoint :: Parser Op
+pOpPoint = pSLASH <|> pSTAR
+
+pOpDash :: Parser Op
+pOpDash = pPLUS <|> pMINUS
+
+pOpCompare :: Parser Op
+pOpCompare = try pLE <|> try pGE <|> pLT <|> pGT <|> pNE <|> pEQ 
 
 -- integer literals ----------------------
 
@@ -217,16 +223,22 @@ pArrayTypeExpression = do
 
 -- Expression Utilities ------------------
 
+pBiOperator :: Parser Op -> Parser ((Expression, [Comment]) -> (Expression, [Comment]) -> (Expression, [Comment]))
+pBiOperator pOp = do
+  op <- pOp << spacesN
+  cs <- pComments
+  return (getBiExpr (op, cs)) 
+
+getBiExpr :: (Op, [Comment]) -> (Expression, [Comment]) -> (Expression, [Comment]) -> (Expression, [Comment])
+getBiExpr (op, cs) e1 e2 = (BinaryExpression op (fst e1) (fst e2), snd e1 ++ cs ++ snd e2)
+
+binary pOp = Infix (pBiOperator pOp) AssocLeft
 -- TODO: comments after the operator do not work yet 
-binary s o = Infix (string s >> spacesN >> return (getBinExpr o)) AssocLeft
 prefix s f = Prefix  (string s >> spacesN >> return f)  
 
 -- TODO: may have to be solved differently to distinguish between '0 - expr' and '- expr'  
 neg :: (Expression, [Comment]) -> (Expression, [Comment])
 neg (e, c) = (BinaryExpression Minus (IntLiteral "0") e, c)
-
-getBinExpr :: Op -> (Expression, [Comment]) -> (Expression, [Comment]) -> (Expression, [Comment])
-getBinExpr o e1 e2 = (BinaryExpression o (fst e1) (fst e2), snd e1 ++ snd e2)
 
 -- Expression ----------------------------
 
@@ -239,10 +251,9 @@ term = between pLParen pRParen pExpression <|> pVariableExpression <|> pIntLiter
 
 table   = [ 
             [prefix "-" neg, prefix "+" id],
-            [binary "*" Star, binary "/" Slash],
-            [binary "+" Plus, binary "-" Minus],
-            -- TODO: <= and >= are not working => unexpected "="
-            [binary "<" Lt, binary ">" Gt, binary "<=" Le, binary ">=" Ge, binary "#" Ne, binary "=" Eq]
+            [binary pOpPoint],
+            [binary pOpDash],
+            [binary pOpCompare]
           ]
 
 pVariableExpression ::  Parser (Expression, [Comment])
