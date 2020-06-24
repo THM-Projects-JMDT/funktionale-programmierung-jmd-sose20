@@ -144,9 +144,9 @@ pCommentOptional :: Parser [Comment]
 pCommentOptional = do 
   la <- lookAhead $ optionMaybe anyChar
   cm <- case la of 
-             Nothing   -> return Nothing
+             Just '\n' -> newline >> spacesL >> return Nothing
              Just '/'  -> Just <$> pComment
-             otherwise -> newline >> spacesL >> return Nothing
+             otherwise -> return Nothing
   let cs = case cm of 
              Nothing -> []
              Just c  -> [c]
@@ -384,11 +384,12 @@ pVariableDeclaration = do
 
 pStatement :: Parser Statement
 pStatement = pWhileStatement 
-         <|> pAssignStatement 
+         <|> (newline >> spacesL >> return StatementEmptyLine)
+         <|> try pAssignStatement 
          <|> pCompoundStatement 
          <|> pEmptyStatement 
          <|> pStatementComment 
-         <|> pIfStatement 
+         <|> try pIfStatement 
          <|> pCallStatement
 
 pAssignStatement :: Parser Statement
@@ -442,7 +443,7 @@ pIfStatement = do
   pRParen >> spacesN
   cs4 <- pComments
   stmt <- pStatement
-  optElse <- optionMaybe pElseStatement
+  optElse <- try (optionMaybe $ spacesN >> pComments >> pElseStatement)
   let (optstmt, cs5) = case optElse of 
                       Nothing             -> (Nothing, [])
                       Just (stmt2, optcs) -> (Just stmt2, optcs)
