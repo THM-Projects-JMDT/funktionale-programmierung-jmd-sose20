@@ -192,6 +192,7 @@ pTypeDeclaration = do
   cs5 <- pCommentOptional
   return $ TypeDeclaration id tExpr (cs1 ++ cs2 ++ cs3 ++ cs4 ++ cs5)
 
+
 -- Procedure Declaration -----------------
 
 pProcedureDeclaration :: Parser GlobalDeclaration
@@ -208,6 +209,7 @@ pProcedureDeclaration = do
   pRCurl >> spacesL
   cs5 <- pCommentOptional
   return $ (ProcedureDeclaration id parm vars stmd cs1)
+
 
 -- TypeExpression ------------------------
 
@@ -263,14 +265,24 @@ prefix pOp f = Prefix  (pPreOperator f pOp)
 neg :: (Expression, [Comment]) -> (Expression, [Comment])
 neg (e, c) = (BinaryExpression Minus (IntLiteral "0") e, c)
 
+
 -- Expression ----------------------------
 
 pExpression :: Parser (Expression, [Comment])
 pExpression    = buildExpressionParser table term
 
 term :: Parser (Expression, [Comment])
--- TODO: If a parenthesized expression is at the beginning, the rest of the expression is ignored 
-term = between pLParen pRParen pExpression <|> pVariableExpression <|> pIntLiteral
+term = pParenthesized <|> pVariableExpression <|> pIntLiteral
+
+pParenthesized :: Parser (Expression, [Comment])
+pParenthesized = do
+  pLParen >> spaces 
+  cs1 <- pComments
+  (expr, cs2) <- pExpression
+  cs2 <- pComments
+  pRParen >> spaces 
+  cs3 <- pComments 
+  return (expr, cs1 ++ cs2 ++ cs3)
 
 table   = [ 
             [prefix pMINUS neg, prefix pPLUS id],
@@ -290,6 +302,7 @@ pIntLiteral = do
   inlit <- pIntLit << spacesN
   cs1 <- pComments
   return $ (IntLiteral inlit, cs1)
+
 
 -- Variables -----------------------------
 
@@ -318,6 +331,7 @@ pAccess = do
   pRBrack >> spacesN
   cs3 <- pComments
   return (expr, cs1 ++ cs2 ++ cs3)
+
 
 -- Parameter Declaration -----------------
 
