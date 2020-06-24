@@ -223,18 +223,25 @@ pArrayTypeExpression = do
 
 -- Expression Utilities ------------------
 
+getBiExpr :: (Op, [Comment]) -> (Expression, [Comment]) -> (Expression, [Comment]) -> (Expression, [Comment])
+getBiExpr (op, cs) e1 e2 = (BinaryExpression op (fst e1) (fst e2), snd e1 ++ cs ++ snd e2)
+
+getPreExpr cs f e1 = f (fst e1, cs ++ snd e1)  
+
 pBiOperator :: Parser Op -> Parser ((Expression, [Comment]) -> (Expression, [Comment]) -> (Expression, [Comment]))
 pBiOperator pOp = do
   op <- pOp << spacesN
   cs <- pComments
-  return (getBiExpr (op, cs)) 
+  return (getBiExpr (op, cs))
 
-getBiExpr :: (Op, [Comment]) -> (Expression, [Comment]) -> (Expression, [Comment]) -> (Expression, [Comment])
-getBiExpr (op, cs) e1 e2 = (BinaryExpression op (fst e1) (fst e2), snd e1 ++ cs ++ snd e2)
+pPreOperator :: ((Expression, [Comment]) -> (Expression, [Comment])) -> Parser Op -> Parser ((Expression, [Comment]) -> (Expression, [Comment]))
+pPreOperator f pOp = do
+  pOp >> spacesN
+  cs <- pComments
+  return $ getPreExpr cs f
 
 binary pOp = Infix (pBiOperator pOp) AssocLeft
--- TODO: comments after the operator do not work yet 
-prefix s f = Prefix  (string s >> spacesN >> return f)  
+prefix pOp f = Prefix  (pPreOperator f pOp)  
 
 -- TODO: may have to be solved differently to distinguish between '0 - expr' and '- expr'  
 neg :: (Expression, [Comment]) -> (Expression, [Comment])
@@ -250,7 +257,7 @@ term :: Parser (Expression, [Comment])
 term = between pLParen pRParen pExpression <|> pVariableExpression <|> pIntLiteral
 
 table   = [ 
-            [prefix "-" neg, prefix "+" id],
+            [prefix pMINUS neg, prefix pPLUS id],
             [binary pOpPoint],
             [binary pOpDash],
             [binary pOpCompare]
