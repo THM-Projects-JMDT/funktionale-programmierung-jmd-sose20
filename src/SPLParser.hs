@@ -208,7 +208,7 @@ pProcedureDeclaration = do
   stmd <- option []  $ many pStatement
   pRCurl >> spacesL
   cs5 <- pCommentOptional
-  return $ (ProcedureDeclaration id parm vars stmd cs1)
+  return $ (ProcedureDeclaration id parm vars stmd $ cs1 ++ cs2 ++ cs3 ++ cs4 ++ cs5)
 
 
 -- TypeExpression ------------------------
