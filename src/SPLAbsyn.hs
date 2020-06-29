@@ -7,37 +7,41 @@ SPL-AST structure - extended with comments
 -}
 
 
-data Program              = Program [GlobalDeclaration]
+data Program              = Program (Commented GlobalDeclaration)
                           deriving (Eq, Show) 
-data GlobalDeclaration    = TypeDeclaration String TypeExpression [Comment]
-                          | ProcedureDeclaration String [ParameterDeclaration] [VariableDeclaration] [Statement] [Comment]
+data GlobalDeclaration    = TypeDeclaration String (Commented TypeExpression) 
+                          | ProcedureDeclaration String [Commented ParameterDeclaration] [Commented VariableDeclaration] [Commented Statement]
                           | GlobalComment Comment
                           | GlobalEmptyLine
                           deriving (Eq, Show)
-data TypeExpression       = ArrayTypeExpression IntString TypeExpression
+data TypeExpression       = ArrayTypeExpression IntString (Commented TypeExpression)
                           | NamedTypeExpression String
                           deriving (Eq, Show)
-data ParameterDeclaration = ParameterDeclaration String TypeExpression Bool 
+data ParameterDeclaration = ParameterDeclaration String (Commented TypeExpression) Bool 
                           deriving (Eq, Show)
-data VariableDeclaration  = VariableDeclaration String TypeExpression [Comment]
+data VariableDeclaration  = VariableDeclaration String (Commented TypeExpression) 
                           deriving (Eq, Show)
-data Statement            = AssignStatement Variable Expression [Comment]
-                          | CallStatement String [Expression] [Comment]
-                          | CompoundStatement [Statement] [Comment]
-                          | EmptyStatement [Comment]
-                          | IfStatement Expression Statement (Maybe Statement) [Comment]
-                          | WhileStatement Expression Statement [Comment]
+data Statement            = AssignStatement (Commented Variable) (Commented Expression) 
+                          | CallStatement String [Commented Expression]
+                          | CompoundStatement [Commented Statement] 
+                          | EmptyStatement
+                          | IfStatement (Commented Expression) (Commented Statement) (Maybe (Commented Statement)) 
+                          | WhileStatement (Commented Expression) (Commented Statement)
                           | StatementComment Comment
                           | StatementEmptyLine
                           deriving (Eq, Show)
 data Variable             = NamedVariable String
-                          | ArrayAccess Variable Expression
+                          | ArrayAccess (Commented Variable) (Commented Expression)
                           deriving (Eq, Show)
-data Expression           = VariableExpression Variable
+data Expression           = VariableExpression (Commented Variable)
                           | IntLiteral IntString
-                          | BinaryExpression Op Expression Expression
+                          | Parenthesized (Commented Expression)
+                          | BinaryExpression (Commented Op) (Commented Expression) (Commented Expression)
+                          | Negative (Commented Expression)
+                          | Positive (Commented Expression)
                           deriving (Eq, Show)
 
+type Commented a = (a, [[Comment]])
 type Comment = String
 type IntString = String
 

@@ -16,7 +16,9 @@ A parser for SPL - based on parsec-combinators
 type Parser a = Parsec String () a -- for convenience
 
 
--- utility -------------------------------
+
+-- utility ---------------------------------------------------
+--------------------------------------------------------------
 
 -- consumes a sequence of any spaces except for newlines (=> only spaces in the same line)
 spacesL :: Parser () 
@@ -41,6 +43,10 @@ f << g = do
   g 
   return x
 
+
+
+-- Token Parsers ---------------------------------------------
+--------------------------------------------------------------
 
 -- comma, semicolon, colon ---------------
 
@@ -99,6 +105,7 @@ pOpDash = pPLUS <|> pMINUS
 pOpCompare :: Parser Op
 pOpCompare = try pLE <|> try pGE <|> pLT <|> pGT <|> pNE <|> pEQ 
 
+
 -- integer literals ----------------------
 
 pIntLit :: Parser IntString
@@ -106,18 +113,21 @@ pIntLit = try pHexLit
           <|> pCharLit 
           <|> pDecLit
 
+pHexLit :: Parser IntString
 pHexLit = do 
   x  <- string "0x"
   xs <- many1 hexDigit
   return $ x ++ xs
 
+pCharLit :: Parser IntString
 pCharLit = do 
-  n <- between (char '\'') (char '\'') anyChar
+  n <- between (char '\'') (char '\'') (try (string "\\n" >> return '\n') <|> anyChar)
   return $ "'" ++ [n] ++ "'"
 
+pDecLit :: Parser IntString
 pDecLit = do 
   ds <- many1 digit 
-  return $ ds
+  return ds
 
 
 -- identifiers ---------------------------
@@ -133,13 +143,13 @@ pIdent = do
 
 -- parses a single comment and following spaces in the next line (e.g. "// this is a comment \n   ")
 pComment :: Parser Comment 
-pComment = do 
+pComment = try $ do 
   string "//"
   cs <- manyTill anyChar (try endOfLine)
   spacesL
   return cs
 
--- parses a single comment - if there is one - and following spaces in the next line
+-- parses an optional comment and returns an empty list (if there is no comment) or a singleton (if there is one)
 pCommentOptional :: Parser [Comment]
 pCommentOptional = do 
   la <- lookAhead $ optionMaybe anyChar
@@ -157,29 +167,33 @@ pComments :: Parser [Comment]
 pComments = many $ pComment << spacesN
 
 
--- SPL-Grammar ---------------------------
+
+-- SPL-Grammar -----------------------------------------------
+--------------------------------------------------------------
 
 -- Program -------------------------------
 
-pProgram :: Parser [GlobalDeclaration]
+pProgram :: Parser [Commented GlobalDeclaration]
 pProgram = many $ pGlobalEmptyLine <|> pGlobalComment <|> pTypeDeclaration <|> pProcedureDeclaration
 
 
 -- Global Empty Line --------------------
 
-pGlobalEmptyLine :: Parser GlobalDeclaration
-pGlobalEmptyLine = newline >> spacesL >> return GlobalEmptyLine
+pGlobalEmptyLine :: Parser (Commented GlobalDeclaration)
+pGlobalEmptyLine = newline >> spacesL >> return (GlobalEmptyLine, [])
 
 
 -- Global Comment
 
-pGlobalComment :: Parser GlobalDeclaration
-pGlobalComment = GlobalComment <$> pComment
+pGlobalComment :: Parser (Commented GlobalDeclaration)
+pGlobalComment = do 
+  c <- pComment
+  return (GlobalComment c, [])
 
 
 -- Type Declaration -----------------------
 
-pTypeDeclaration :: Parser GlobalDeclaration
+pTypeDeclaration :: Parser (Commented GlobalDeclaration)
 pTypeDeclaration = do 
   pType >> spacesN
   cs1 <- pComments 
@@ -187,42 +201,24 @@ pTypeDeclaration = do
   cs2 <- pComments 
   pEQ >> spacesN
   cs3 <- pComments
-  (tExpr, cs4) <- pTypeExpression 
+  tExpr <- pTypeExpression 
   pSemic >> spacesL
-  cs5 <- pCommentOptional
-  return $ TypeDeclaration id tExpr (cs1 ++ cs2 ++ cs3 ++ cs4 ++ cs5)
-
-
--- Procedure Declaration -----------------
-
-pProcedureDeclaration :: Parser GlobalDeclaration
-pProcedureDeclaration = do
-  pProc >> spacesN
-  cs1 <- pComments
-  id <- pIdent << spacesN
-  cs2 <- pComments
-  (parm, cs3) <- pParameterDeclarations
-  pLCurl >> spacesN
-  cs4 <- pComments
-  vars <- option []  $ many pVariableDeclaration
-  stmd <- option []  $ many pStatement
-  pRCurl >> spacesL
-  cs5 <- pCommentOptional
-  return $ (ProcedureDeclaration id parm vars stmd $ cs1 ++ cs2 ++ cs3 ++ cs4 ++ cs5)
+  cs4 <- pCommentOptional
+  return (TypeDeclaration id tExpr, [cs1, cs2, cs3, cs4])
 
 
 -- TypeExpression ------------------------
 
-pTypeExpression :: Parser (TypeExpression, [Comment])
+pTypeExpression :: Parser (Commented TypeExpression)
 pTypeExpression = pArrayTypeExpression <|> pNamedTypeExpression
 
-pNamedTypeExpression :: Parser (TypeExpression, [Comment])
+pNamedTypeExpression :: Parser (Commented TypeExpression)
 pNamedTypeExpression = do
   id <- pIdent << spacesN
   cs <- pComments 
-  return $ (NamedTypeExpression id, cs)
+  return (NamedTypeExpression id, [cs])
 
-pArrayTypeExpression :: Parser (TypeExpression, [Comment])
+pArrayTypeExpression :: Parser (Commented TypeExpression)
 pArrayTypeExpression = do
   pArray >> spacesN
   cs1 <- pComments
@@ -234,139 +230,154 @@ pArrayTypeExpression = do
   cs4 <- pComments
   pOf >> spacesN
   cs5 <- pComments
-  (tExpr, cs6) <- pTypeExpression
-  cs7 <- pComments
-  return $ (ArrayTypeExpression idx tExpr, cs1 ++ cs2 ++ cs3 ++ cs4 ++ cs5 ++ cs6 ++ cs7)
+  tExpr <- pTypeExpression
+  return (ArrayTypeExpression idx tExpr, [cs1, cs2, cs3, cs4, cs5])
 
 
--- Expression Utilities ------------------
+-- Variables -----------------------------
 
-getBiExpr :: (Op, [Comment]) -> (Expression, [Comment]) -> (Expression, [Comment]) -> (Expression, [Comment])
-getBiExpr (op, cs) e1 e2 = (BinaryExpression op (fst e1) (fst e2), snd e1 ++ cs ++ snd e2)
+pVariable :: Parser (Commented Variable)
+pVariable =  try pArrayAccess <|> pNamedVariable
 
-getPreExpr cs f e1 = f (fst e1, cs ++ snd e1)  
-
-pBiOperator :: Parser Op -> Parser ((Expression, [Comment]) -> (Expression, [Comment]) -> (Expression, [Comment]))
-pBiOperator pOp = do
-  op <- pOp << spacesN
+pNamedVariable :: Parser (Commented Variable)
+pNamedVariable = do
+  id <- pIdent << spacesN
   cs <- pComments
-  return (getBiExpr (op, cs))
+  return (NamedVariable id, [cs])
 
-pPreOperator :: ((Expression, [Comment]) -> (Expression, [Comment])) -> Parser Op -> Parser ((Expression, [Comment]) -> (Expression, [Comment]))
-pPreOperator f pOp = do
-  pOp >> spacesN
-  cs <- pComments
-  return $ getPreExpr cs f
+pArrayAccess :: Parser (Commented Variable)
+pArrayAccess = do 
+  nVar <- pNamedVariable
+  exprs <- many1 pAccess
+  let acc = foldl (\v e -> (ArrayAccess v e, [])) nVar exprs
+  return acc
 
-binary pOp = Infix (pBiOperator pOp) AssocLeft
-prefix pOp f = Prefix  (pPreOperator f pOp)  
-
--- TODO: may have to be solved differently to distinguish between '0 - expr' and '- expr'  
-neg :: (Expression, [Comment]) -> (Expression, [Comment])
-neg (e, c) = (BinaryExpression Minus (IntLiteral "0") e, c)
+pAccess :: Parser (Commented Expression)
+pAccess = do 
+  pLBrack >> spacesN
+  cs1 <- pComments 
+  (expr, css) <- pExpression
+  pRBrack >> spacesN
+  cs2 <- try (pComments <|> return [])
+  return (expr, [cs1] ++ css ++ [cs2])
 
 
 -- Expression ----------------------------
 
-pExpression :: Parser (Expression, [Comment])
-pExpression    = buildExpressionParser table term
+pExpression :: Parser (Commented Expression)
+pExpression = buildExpressionParser table term 
 
-term :: Parser (Expression, [Comment])
+term :: Parser (Commented Expression)
 term = pParenthesized <|> pVariableExpression <|> pIntLiteral
 
-pParenthesized :: Parser (Expression, [Comment])
+pParenthesized :: Parser (Commented Expression)
 pParenthesized = do
   pLParen >> spaces 
   cs1 <- pComments
-  (expr, cs2) <- pExpression
-  cs2 <- pComments
+  expr <- pExpression
   pRParen >> spaces 
-  cs3 <- pComments 
-  return (expr, cs1 ++ cs2 ++ cs3)
+  cs2 <- pComments
+  return (Parenthesized expr, [cs1, cs2])
 
 table   = [ 
-            [prefix pMINUS neg, prefix pPLUS id],
+            [prefix pMINUS neg, prefix pPLUS pos],
             [binary pOpPoint],
             [binary pOpDash],
             [binary pOpCompare]
           ]
 
-pVariableExpression ::  Parser (Expression, [Comment])
+pVariableExpression ::  Parser (Commented Expression)
 pVariableExpression = do
-  (id, cs1) <- pVariable << spacesN
-  cs2 <- pComments 
-  return $ (VariableExpression id, (cs1 ++ cs2))
+  id <- pVariable
+  return (VariableExpression id, [])
 
-pIntLiteral :: Parser (Expression, [Comment])
+pIntLiteral :: Parser (Commented Expression)
 pIntLiteral = do
-  inlit <- pIntLit << spacesN
+  intLit <- pIntLit << spacesN
   cs1 <- pComments
-  return $ (IntLiteral inlit, cs1)
+  return (IntLiteral intLit, [cs1])
 
 
--- Variables -----------------------------
+-- Expression Utilities ------------------
 
-pVariable :: Parser (Variable, [Comment])
-pVariable =  try pArrayAccess <|> pNamedVariable
+getBiExpr :: Commented Op -> Commented Expression -> Commented Expression -> Commented Expression
+getBiExpr op e1 e2 = (BinaryExpression op e1 e2, [])
 
-pNamedVariable :: Parser (Variable, [Comment])
-pNamedVariable = do
+getPreExpr :: [[Comment]] -> (Commented Expression -> Commented Expression) -> Commented Expression -> Commented Expression
+getPreExpr css1 f (e, css2) = f (e, css1 ++ css2)  
+
+pBiOperator :: Parser Op -> Parser (Commented Expression -> Commented Expression -> Commented Expression)
+pBiOperator pOp = do
+  op <- pOp << spacesN
+  cs <- pComments
+  return (getBiExpr (op, [cs]))
+
+pPreOperator :: (Commented Expression -> Commented Expression) -> Parser Op -> Parser ((Commented Expression) -> (Commented Expression))
+pPreOperator f pOp = do
+  pOp >> spacesN
+  cs <- pComments
+  return $ getPreExpr [cs] f
+
+binary pOp = Infix (pBiOperator pOp) AssocLeft
+prefix pOp f = Prefix  (pPreOperator f pOp)  
+
+neg :: Commented Expression -> Commented Expression
+neg (e, css) = (Negative (e, tail css), [head css])
+
+pos :: Commented Expression -> Commented Expression
+pos (e, css) = (Positive (e, tail css), [head css])
+
+
+-- Procedure Declaration -----------------
+
+pProcedureDeclaration :: Parser (Commented GlobalDeclaration)
+pProcedureDeclaration = do
+  pProc >> spacesN
+  cs1 <- pComments
   id <- pIdent << spacesN
-  cs <- pComments 
-  return $ (NamedVariable id, cs)
-
-pArrayAccess :: Parser (Variable, [Comment])
-pArrayAccess = do 
-  (nVar, cs1) <- pNamedVariable
   cs2 <- pComments
-  (exprs, css) <- unzip <$> many1 pAccess
-  let acc = foldl ArrayAccess nVar exprs
-  return (acc, cs1 ++ cs2 ++ concat css)
-
-pAccess :: Parser (Expression, [Comment])
-pAccess = do 
-  pLBrack >> spacesN
-  cs1 <- pComments 
-  (expr, cs2) <- pExpression
-  pRBrack >> spacesN
-  cs3 <- pComments
-  return (expr, cs1 ++ cs2 ++ cs3)
+  pLParen >> spacesN
+  cs3 <- pComments 
+  pDecs <- option [] pParameterDeclarationList
+  pRParen >> spacesN
+  cs4 <- pComments
+  pLCurl >> spacesN
+  cs5 <- pComments
+  vDecs <- many pVariableDeclaration
+  stmts <- many pStatement
+  pRCurl >> spacesL
+  cs6 <- pCommentOptional
+  return (ProcedureDeclaration id pDecs vDecs stmts, [cs1, cs2, cs3, cs4, cs5, cs6])
 
 
 -- Parameter Declaration -----------------
 
-pParameterDeclarations :: Parser ([ParameterDeclaration], [Comment])
-pParameterDeclarations = do 
-  pLParen >> spacesN
-  cs1 <- pComments
-  (dec, cs2) <- option ([], []) pParameterDeclarationList
-  pRParen >> spacesN
-  cs3 <- pComments
-  return (dec, cs1 ++ cs2 ++ cs3)
-
-pParameterDeclarationList :: Parser ([ParameterDeclaration], [Comment])
+pParameterDeclarationList :: Parser ([Commented ParameterDeclaration])
 pParameterDeclarationList = do
-  (dec, cs1) <- pParameterDeclaration
-  decs <-  many (pComma >> spacesN >> pParameterDeclaration) << spacesN
+  dec <- pParameterDeclaration
+  decs <-  many $ do
+    pComma >> spacesN
+    cs <- pComments
+    (dec, css) <- pParameterDeclaration
+    return (dec, [cs] ++ css)
   cs2 <- pComments
-  return (dec : map fst decs, cs1 ++ concatMap  snd decs ++ cs2)
+  return (dec:decs)
 
-pParameterDeclaration :: Parser (ParameterDeclaration, [Comment])
+pParameterDeclaration :: Parser (Commented ParameterDeclaration)
 pParameterDeclaration = do
-  ref <- option False (do {pRef; return True}) << spacesN
+  ref <- option False (do {try pRef; return True}) << spacesN
   cs1 <- pComments
   id <- pIdent << spacesN
   cs2 <- pComments
   pColon >> spacesN
   cs3 <- pComments
-  (tExpr, cs4) <- pTypeExpression
-  cs5 <- pComments
-  return (ParameterDeclaration id tExpr ref, cs1 ++ cs2 ++ cs3 ++ cs4 ++ cs5)
-
+  tExpr <- pTypeExpression
+  return (ParameterDeclaration id tExpr ref, [cs1, cs2, cs3])
+  
 
 -- Variable Declaration ------------------
 
-pVariableDeclaration :: Parser VariableDeclaration
+pVariableDeclaration :: Parser (Commented VariableDeclaration)
 pVariableDeclaration = do
   pVar >> spacesN
   cs1 <- pComments 
@@ -374,17 +385,17 @@ pVariableDeclaration = do
   cs2 <- pComments 
   pColon >> spacesN
   cs3 <- pComments
-  (tExpr, cs4) <- pTypeExpression 
+  tExpr <- pTypeExpression 
   pSemic >> spacesL
-  cs5 <- pCommentOptional
-  return $ VariableDeclaration id tExpr (cs1 ++ cs2 ++ cs3 ++ cs4 ++ cs5)
+  cs4 <- pCommentOptional
+  return (VariableDeclaration id tExpr, [cs1, cs2, cs3, cs4])
 
 
 -- Statements ----------------------------
 
-pStatement :: Parser Statement
-pStatement = pWhileStatement 
-         <|> (newline >> spacesL >> return StatementEmptyLine)
+pStatement :: Parser (Commented Statement)
+pStatement = try pWhileStatement 
+         <|> pStatementEmptyLine
          <|> try pAssignStatement 
          <|> pCompoundStatement 
          <|> pEmptyStatement 
@@ -392,84 +403,94 @@ pStatement = pWhileStatement
          <|> try pIfStatement 
          <|> pCallStatement
 
-pAssignStatement :: Parser Statement
+pAssignStatement :: Parser (Commented Statement)
 pAssignStatement = do
-  (id, cs1) <- pVariable << spacesN
-  cs2 <- pComments 
+  id <- pVariable
+  cs1 <- pComments 
   pASGN >> spacesN
-  cs3 <- pComments
-  (tExpr, cs4) <- pExpression 
+  cs2 <- pComments
+  tExpr <- pExpression 
   pSemic >> spacesL
-  cs5 <- pCommentOptional
-  return $ AssignStatement id tExpr (cs1 ++ cs2 ++ cs3 ++ cs4 ++ cs5)
+  cs3 <- pCommentOptional
+  return (AssignStatement id tExpr, [cs1, cs2, cs3])
 
-pWhileStatement :: Parser Statement
+pWhileStatement :: Parser (Commented Statement)
 pWhileStatement = do
   pWhile >> spacesN
   cs1 <- pComments
   pLParen >> spacesN
   cs2 <- pComments 
-  (expr, cs3) <- pExpression 
+  expr <- pExpression 
   pRParen >> spacesN
-  cs5 <- pComments
+  cs3 <- pComments
   stmt <- pStatement
-  return $ WhileStatement expr stmt (cs1 ++ cs2 ++ cs3 ++ cs5)
+  return (WhileStatement expr stmt, [cs1, cs2, cs3])
 
-pCompoundStatement :: Parser Statement
+pCompoundStatement :: Parser (Commented Statement)
 pCompoundStatement = do
-  pLCurl  >> spacesN
-  cs1 <- pComments
-  stmt <- many pStatement << spacesN
+  pLCurl  >> spacesL
+  cs1 <- pCommentOptional
+  stmt <- many pStatement 
   pRCurl >> spacesN
-  cs3 <- pCommentOptional
-  return $ CompoundStatement stmt (cs1 ++cs3)
+  cs2 <- pCommentOptional
+  return (CompoundStatement stmt, [cs1, cs2])
 
-pEmptyStatement :: Parser Statement 
+pEmptyStatement :: Parser (Commented Statement) 
 pEmptyStatement = do 
   pSemic  >> spacesL
   cs1 <- pCommentOptional
-  return $ EmptyStatement cs1
+  return $ (EmptyStatement, [cs1])
 
-pStatementComment :: Parser Statement
-pStatementComment = StatementComment <$> pComment
+pStatementComment :: Parser (Commented Statement)
+pStatementComment = do 
+  c <- pComment
+  return (StatementComment c, [])
 
-pIfStatement :: Parser Statement
+pStatementEmptyLine :: Parser (Commented Statement)
+pStatementEmptyLine = newline >> spacesL >> return (StatementEmptyLine, [])
+
+pIfStatement :: Parser (Commented Statement)
 pIfStatement = do
   pIf >> spacesN
   cs1 <- pComments
   pLParen >> spacesN
   cs2 <- pComments 
-  (expr, cs3) <- pExpression 
+  expr <- pExpression 
   pRParen >> spacesN
-  cs4 <- pComments
+  cs3 <- pComments
   stmt <- pStatement
   optElse <- try (optionMaybe $ spacesN >> pComments >> pElseStatement)
-  let (optstmt, cs5) = case optElse of 
-                      Nothing             -> (Nothing, [])
-                      Just (stmt2, optcs) -> (Just stmt2, optcs)
-  return $ IfStatement expr stmt optstmt(cs1 ++ cs2 ++ cs3 ++ cs4 ++ cs5)
+  let optstmt = case optElse of 
+                  Nothing    -> Nothing
+                  Just stmt2 -> Just stmt2
+  return (IfStatement expr stmt optstmt, [cs1, cs2, cs3])
 
-pElseStatement  :: Parser (Statement, [Comment])
+pElseStatement  :: Parser (Commented Statement)
 pElseStatement = do 
   pElse >> spacesN
   cs1 <- pComments
-  stmt <- pStatement
-  return $ (stmt, cs1)
+  (stmt, css) <- pStatement
+  return (stmt, [cs1] ++ css)
 
-pCallStatement :: Parser Statement
+pCallStatement :: Parser (Commented Statement)
 pCallStatement = do 
   id <- pIdent << spacesN
-  cs2 <- pComments 
+  cs1 <- pComments 
   pLParen >> spacesN
-  cs3 <- pComments
-  (expr, cs4) <- pExpression
-  exprs <-  many (pComma >> spacesN >> pExpression << spacesN)
-  cs5 <- pComments
+  cs2 <- pComments
+  exprs <- option [] pExpressionList
   pRParen >> spacesN
-  cs6 <- pComments
-  return $ CallStatement id (expr : map fst exprs) (cs2 ++ cs3 ++ cs4 ++ concatMap snd exprs ++ cs5 ++cs6)
+  cs3 <- pComments
+  pSemic >> spacesL
+  cs4 <- pCommentOptional
+  return (CallStatement id exprs, [cs1, cs2, cs3, cs4])
 
--- test example
-tDecl = "hallo(10,// hallo \n20,30)"
-
-tAcc = "arr\n  \n//A\n[//B\n \n 4\n//C\n ]//D\n\n[5] //E\n//F\n"
+pExpressionList :: Parser ([Commented Expression])
+pExpressionList = do 
+  expr <- pExpression 
+  exprs <- many $ do 
+    pComma >> spacesN
+    cs <- pComments 
+    (expr, css) <- pExpression
+    return (expr, [cs] ++ css)
+  return (expr:exprs)
