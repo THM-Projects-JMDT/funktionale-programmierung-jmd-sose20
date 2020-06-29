@@ -23,14 +23,16 @@ data IndentationType = Space
                      | Tab 
                      deriving (Eq, Show)
 
-type PrettyPrinter a = Config -> Int -> a -> String
+type PrettyPrinter a = Config -> IndentationLevel -> a -> String
+
+type IndentationLevel = Int
 
 
 
 -- utility ---------------------------------------------------
 --------------------------------------------------------------
 
-indent :: IndentationType -> Int -> Int -> String 
+indent :: IndentationType -> IndentationLevel -> Int -> String 
 indent it n c = replicate (n * c) $ case it of 
                                       Space -> ' '
                                       Tab   -> '\t'
@@ -50,7 +52,7 @@ printVariable conf@(Config it n _ _) c (NamedVariable v, css) = indent it n c
 
 printLineComment :: PrettyPrinter Comment
 printLineComment (Config it n _ _) c cm = indent it n c 
-                                       ++ showComment cm)
+                                       ++ showComment cm
 
 printComments :: PrettyPrinter [Comment]
 printComments _ _ [] = ""
