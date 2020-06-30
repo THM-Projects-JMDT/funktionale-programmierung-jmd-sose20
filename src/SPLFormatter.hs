@@ -60,9 +60,8 @@ testFormat s p f = putStrLn $ case run p s of
 -- pretty printing -------------------------------------------
 --------------------------------------------------------------
 
-fVariable :: PrettyPrinter (Commented Variable) 
-fVariable conf@(Config it n _ _ _) c (NamedVariable v, css) =  v 
-                                                                ++ fComments conf c (head css)
+
+-- Comments --------------------------------------------------
 
 fLineComment :: PrettyPrinter Comment
 fLineComment conf@(Config it n _ _ _) c cm = indent it n c 
@@ -80,3 +79,23 @@ fComments (Config _ _ _ False _) _ _ = ""
 fComments conf c (cm:cms)            = " " 
                                         ++ fComment conf c cm 
                                         ++ concatMap (fComment conf c) cms
+
+-- Programm ---------------------------------------------------
+
+-- GlobalDeclarations -----------------------------------------
+
+-- TypeExpressions --------------------------------------------
+
+-- ParameterDeclaration ---------------------------------------
+
+-- VariableDeclaration ----------------------------------------
+
+-- Statements -------------------------------------------------
+
+-- Variables --------------------------------------------------
+
+fVariable :: PrettyPrinter (Commented Variable) 
+fVariable conf@(Config it n _ _ _) c (NamedVariable v, css) =  v 
+                                                                ++ fComments conf c (head css)
+
+-- Expressions ------------------------------------------------
