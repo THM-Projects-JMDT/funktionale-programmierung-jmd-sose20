@@ -97,7 +97,17 @@ fStatement conf@(Config it n _ _ _) c (AssignStatement v e , css) =  fVariable c
                                                                 ++ " := "
                                                                 ++ fExpression conf c e
                                                                 ++ fComments conf c (head css)
-                                                                --- todo  "x:= //hallo \n y \n ;\n kommentar fehlt
+                                                                -- todo x:= //hallo \n y \n  kommentar geht noch nicht
+fStatement conf@(Config it n _ _ _) c (StatementComment s , css) =  fComment conf c s    
+fStatement conf@(Config it n _ _ nls) c (StatementEmptyLine, css) =  case nls of
+                                                       Linux      -> "\n"
+                                                       Windows    -> "\r\n"
+                                                       ClassicMac -> "\r"
+fStatement conf@(Config it n _ _ nls) c (EmptyStatement, css) =  case nls of
+                                                       Linux      -> "\n"
+                                                       Windows    -> "\r\n"
+                                                       ClassicMac -> "\r"                                                      
+                                                              
 
 -- Variables --------------------------------------------------
 
