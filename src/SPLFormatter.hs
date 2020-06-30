@@ -69,7 +69,7 @@ printLineComment conf@(Config it n _ _ _) c cm = indent it n c
                                               ++ printComment conf c cm
 
 printComment :: PrettyPrinter Comment
-printComment (Config _ _ _ _ nlt) _ c = "//" ++ c ++ case nlt of
+printComment (Config _ _ _ _ nls) _ c = "//" ++ c ++ case nls of
                                                        Linux      -> "\n"
                                                        Windows    -> "\r\n"
                                                        ClassicMac -> "\r"
