@@ -406,13 +406,12 @@ pStatement = try pWhileStatement
 pAssignStatement :: Parser (Commented Statement)
 pAssignStatement = do
   id <- pVariable
-  cs1 <- pComments 
   pASGN >> spacesN
-  cs2 <- pComments
+  cs1 <- pComments
   tExpr <- pExpression 
   pSemic >> spacesL
-  cs3 <- pCommentOptional
-  return (AssignStatement id tExpr, [cs1, cs2, cs3])
+  cs2 <- pCommentOptional
+  return (AssignStatement id tExpr, [cs1, cs2])
 
 pWhileStatement :: Parser (Commented Statement)
 pWhileStatement = do
