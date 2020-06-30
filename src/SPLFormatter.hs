@@ -44,6 +44,12 @@ indent it n c = replicate (n * c) $ case it of
                                       Space -> ' '
                                       Tab   -> '\t'
 
+newline_ :: NewLineStyle -> String 
+newline_ nls = case nls of
+                 Linux      -> "\n"
+                 Windows    -> "\r\n"
+                 ClassicMac -> "\r"
+
                             
 -- for testing -----------------------------------------------
 --------------------------------------------------------------
@@ -69,10 +75,7 @@ fLineComment conf@(Config it n _ _ _) c cm = indent it n c
                                               ++ fComment conf c cm
 
 fComment :: PrettyPrinter Comment
-fComment (Config _ _ _ _ nls) _ c = "//" ++ c ++ case nls of
-                                                       Linux      -> "\n"
-                                                       Windows    -> "\r\n"
-                                                       ClassicMac -> "\r"
+fComment (Config _ _ _ _ nls) _ c = "//" ++ c ++ newline_ nls
 
 fComments :: PrettyPrinter [Comment]
 fComments _ _ []                     = ""
@@ -93,20 +96,14 @@ fComments conf c (cm:cms)            = " "
 
 -- Statements -------------------------------------------------
 fStatement :: PrettyPrinter (Commented Statement)  
-fStatement conf@(Config it n _ _ _) c (AssignStatement v e , css) =  fVariable conf c v 
+fStatement conf@(Config it n _ _ _) c (AssignStatement v e , css) = fVariable conf c v 
                                                                 ++ " := "
                                                                 ++ fExpression conf c e
                                                                 ++ fComments conf c (head css)
                                                                 -- todo x:= //hallo \n y \n  kommentar geht noch nicht
-fStatement conf@(Config it n _ _ _) c (StatementComment s , css) =  fComment conf c s    
-fStatement conf@(Config it n _ _ nls) c (StatementEmptyLine, css) =  case nls of
-                                                       Linux      -> "\n"
-                                                       Windows    -> "\r\n"
-                                                       ClassicMac -> "\r"
-fStatement conf@(Config it n _ _ nls) c (EmptyStatement, css) =  case nls of
-                                                       Linux      -> "\n"
-                                                       Windows    -> "\r\n"
-                                                       ClassicMac -> "\r"                                                      
+fStatement conf@(Config it n _ _ _) c (StatementComment s , css) = fComment conf c s    
+fStatement conf@(Config _ _ _ _ nls) _ (StatementEmptyLine, css) = newline_ nls
+fStatement conf@(Config it n _ _ nls) c (EmptyStatement, css) = newline_ nls                                                     
                                                               
 
 -- Variables --------------------------------------------------
