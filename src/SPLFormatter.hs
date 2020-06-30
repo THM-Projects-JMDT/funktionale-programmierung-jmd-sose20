@@ -57,6 +57,7 @@ testFormat s p f = putStrLn $ case run p s of
                                 Right r -> f defaultConfig 0 r
 
 
+
 -- pretty printing -------------------------------------------
 --------------------------------------------------------------
 
@@ -91,6 +92,12 @@ fComments conf c (cm:cms)            = " "
 -- VariableDeclaration ----------------------------------------
 
 -- Statements -------------------------------------------------
+fStatement :: PrettyPrinter (Commented Statement)  
+fStatement conf@(Config it n _ _ _) c (AssignStatement v e , css) =  fVariable conf c v 
+                                                                ++ " := "
+                                                                ++ fExpression conf c e
+                                                                ++ fComments conf c (head css)
+                                                                --- todo  "x:= //hallo \n y \n ;\n kommentar fehlt
 
 -- Variables --------------------------------------------------
 
@@ -99,3 +106,7 @@ fVariable conf@(Config it n _ _ _) c (NamedVariable v, css) =  v
                                                                 ++ fComments conf c (head css)
 
 -- Expressions ------------------------------------------------
+
+fExpression :: PrettyPrinter (Commented Expression) 
+fExpression conf@(Config it n _ _ _) c (VariableExpression v, css) = fVariable conf c v
+                                                        
