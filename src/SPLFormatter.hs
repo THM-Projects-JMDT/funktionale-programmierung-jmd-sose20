@@ -60,23 +60,23 @@ testFormat s p f = putStrLn $ case run p s of
 -- pretty printing -------------------------------------------
 --------------------------------------------------------------
 
-printVariable :: PrettyPrinter (Commented Variable) 
-printVariable conf@(Config it n _ _ _) c (NamedVariable v, css) =  v 
-                                                                ++ printComments conf c (head css)
+fVariable :: PrettyPrinter (Commented Variable) 
+fVariable conf@(Config it n _ _ _) c (NamedVariable v, css) =  v 
+                                                                ++ fComments conf c (head css)
 
-printLineComment :: PrettyPrinter Comment
-printLineComment conf@(Config it n _ _ _) c cm = indent it n c 
-                                              ++ printComment conf c cm
+fLineComment :: PrettyPrinter Comment
+fLineComment conf@(Config it n _ _ _) c cm = indent it n c 
+                                              ++ fComment conf c cm
 
-printComment :: PrettyPrinter Comment
-printComment (Config _ _ _ _ nls) _ c = "//" ++ c ++ case nls of
+fComment :: PrettyPrinter Comment
+fComment (Config _ _ _ _ nls) _ c = "//" ++ c ++ case nls of
                                                        Linux      -> "\n"
                                                        Windows    -> "\r\n"
                                                        ClassicMac -> "\r"
 
-printComments :: PrettyPrinter [Comment]
-printComments _ _ []                     = ""
-printComments (Config _ _ _ False _) _ _ = ""
-printComments conf c (cm:cms)            = " " 
-                                        ++ printComment conf c cm 
-                                        ++ concatMap (printLineComment conf c) cms
+fComments :: PrettyPrinter [Comment]
+fComments _ _ []                     = ""
+fComments (Config _ _ _ False _) _ _ = ""
+fComments conf c (cm:cms)            = " " 
+                                        ++ fComment conf c cm 
+                                        ++ concatMap (fComment conf c) cms
