@@ -59,8 +59,8 @@ run p = runParser p () ""
 
 testFormat :: String -> Parser a -> PrettyPrinter a -> IO ()
 testFormat s p f = putStrLn $ case run p s of 
-                                Left _  -> error "Parser failed"
-                                Right r -> f defaultConfig 0 r
+                                Left err  -> "Parser failed: " ++ show err
+                                Right r -> f defaultConfig 2 r
 
 
 
@@ -71,18 +71,26 @@ testFormat s p f = putStrLn $ case run p s of
 -- Comments --------------------------------------------------
 
 fLineComment :: PrettyPrinter Comment
-fLineComment conf@(Config it n _ _ _) c cm = indent it n c 
-                                              ++ fComment conf c cm
+fLineComment conf@(Config it n _ _ _) c cm = indent it n c ++ fComment conf c cm
 
 fComment :: PrettyPrinter Comment
 fComment (Config _ _ _ _ nls) _ c = "//" ++ c ++ newline_ nls
 
+fComment_ :: PrettyPrinter Comment 
+fComment_ conf c cm = " " ++ fComment conf c cm
+
+fOptionalComment :: PrettyPrinter [Comment]
+fOptionalComment conf@(Config _ _ _ _ nls) c cs = if null cs 
+                                                    then newline_ nls 
+                                                    else fComment_ conf c (head cs)
+
 fComments :: PrettyPrinter [Comment]
-fComments _ _ []                     = ""
-fComments (Config _ _ _ False _) _ _ = ""
-fComments conf c (cm:cms)            = " " 
-                                        ++ fComment conf c cm 
-                                        ++ concatMap (fComment conf c) cms
+fComments _ _ []                              = ""
+fComments (Config _ _ _ False _) _ _          = ""
+fComments conf@(Config it n _ _ _) c (cm:cms) = " " 
+                                             ++ fComment conf c cm 
+                                             ++ concatMap (fLineComment conf c) cms
+                                             ++ indent it n c
 
 -- Programm ---------------------------------------------------
 
@@ -96,24 +104,30 @@ fComments conf c (cm:cms)            = " "
 
 -- Statements -------------------------------------------------
 fStatement :: PrettyPrinter (Commented Statement)  
-fStatement conf@(Config it n _ _ _) c (AssignStatement v e , css) = fVariable conf c v 
-                                                                ++ " := "
-                                                                ++ fExpression conf c e
-                                                                ++ fComments conf c (head css)
-                                                                -- todo x:= //hallo \n y \n  kommentar geht noch nicht
-fStatement conf@(Config it n _ _ _) c (StatementComment s , css) = fComment conf c s    
-fStatement conf@(Config _ _ _ _ nls) _ (StatementEmptyLine, css) = newline_ nls
-fStatement conf@(Config it n _ _ nls) c (EmptyStatement, css) = newline_ nls                                                     
+fStatement conf@(Config it n _ _ nls) c (AssignStatement v e, css) = indent it n c
+                                                                  ++ fVariable conf c v 
+                                                                  ++ " := "
+                                                                  ++ fComments conf c (css !! 0)
+                                                                  ++ fExpression conf c e
+                                                                  ++ ";"
+                                                                  ++ fOptionalComment conf c (css !! 1)
+
+fStatement conf c (StatementComment s, _)                      = fLineComment conf c s    
+
+fStatement conf@(Config _ _ _ _ nls) _ (StatementEmptyLine, _) = newline_ nls
+
+fStatement conf@(Config it n _ _ nls) c (EmptyStatement, css)  = ";"
+                                                              ++ fOptionalComment conf c (head css)                                                    
                                                               
 
 -- Variables --------------------------------------------------
 
 fVariable :: PrettyPrinter (Commented Variable) 
 fVariable conf@(Config it n _ _ _) c (NamedVariable v, css) =  v 
-                                                                ++ fComments conf c (head css)
+                                                            ++ fComments conf c (head css)
 
 -- Expressions ------------------------------------------------
 
 fExpression :: PrettyPrinter (Commented Expression) 
-fExpression conf@(Config it n _ _ _) c (VariableExpression v, css) = fVariable conf c v
+fExpression conf c (VariableExpression v, _) = fVariable conf c v
                                                         
