@@ -50,6 +50,17 @@ newline_ nls = case nls of
                  Windows    -> "\r\n"
                  ClassicMac -> "\r"
 
+showOp :: Op -> String
+showOp Lt    = "<" 
+showOp Ne    = "#"
+showOp Plus  = "+"
+showOp Slash = "/"
+showOp Star  = "*"
+showOp Gt    = ">"
+showOp Le    = "<="
+showOp Minus = "-"
+showOp Ge    = ">="
+showOp Eq    = "=" 
                             
 -- for testing -----------------------------------------------
 --------------------------------------------------------------
@@ -126,9 +137,38 @@ fStatement conf@(Config it n _ _ nls) c (EmptyStatement, css)  = indent it n c
 fVariable :: PrettyPrinter (Commented Variable) 
 fVariable conf@(Config it n _ _ _) c (NamedVariable v, css) =  v 
                                                             ++ fComments conf c (head css)
+-- TODO ArrayAccess: Comments not always work properly
+fVariable conf@(Config it n _ _ _ ) c (ArrayAccess v expr@(_, css), _) = fVariable conf c v
+                                                            ++ "["
+                                                            ++ fExpression conf c expr
+                                                            ++ "]"
+                                                            ++ fComments conf c (concat $ tail css)
 
 -- Expressions ------------------------------------------------
 
 fExpression :: PrettyPrinter (Commented Expression) 
 fExpression conf c (VariableExpression v, _) = fVariable conf c v
-                                                        
+fExpression conf c (IntLiteral i, css) = i
+                                        ++ fComments conf c (head css)
+fExpression conf c (Parenthesized expr, css) = "("
+                                            ++ fComments conf c (head css)
+                                            ++ fExpression conf c expr
+                                            ++ ")"
+                                            ++ fComments conf c (css !! 1)                                        
+fExpression conf c (BinaryExpression op expr1 expr2, _) = fExpression conf c expr1
+                                                          ++ fOperator conf c op
+                                                          ++ fExpression conf c expr2
+fExpression conf c (Negative expr, css) = showOp Minus
+                                        ++ fComments conf c (head css)
+                                        ++ fExpression conf c expr
+fExpression conf c (Positive expr, css) = showOp Plus
+                             ++ fComments conf c (head css)
+                             ++ fExpression conf c expr                             
+
+-- Operator ---------------------------------------------------
+
+fOperator :: PrettyPrinter (Commented Op)
+fOperator conf c (op, css) = " "
+                           ++ showOp op
+                           ++ " "
+                           ++ fComments conf c (head css) 
