@@ -1,3 +1,12 @@
+{-|
+Module      : SPLParser
+Description : A Parser for SPL.
+
+This module provides functions for parsing SPL source code into an AST-representation.
+The functions are based on monadic parser combinators provided by the Parsec library.
+-}
+
+
 module SPLParser where
 
 import Text.Parsec
@@ -6,47 +15,17 @@ import Data.Char
 
 import SPLAbsyn
 
-{-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-A parser for SPL - based on parsec-combinators
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
--}
 
+----------------------------------------------------
+-- * Parsers
+----------------------------------------------------
 
+-- |Base type alias for the parser functions
 type Parser a = Parsec String () a -- for convenience
 
 
-
--- utility ---------------------------------------------------
---------------------------------------------------------------
-
--- consumes a sequence of any spaces except for newlines (=> only spaces in the same line)
-spacesL :: Parser () 
-spacesL = many (char ' ' <|> char '\t') >> return ()
-
--- consumes a sequence of any spaces including newlines
-spacesN :: Parser () 
-spacesN = spaces
-
--- returns a parser that consumes following spaces in the same line
-wsL :: Parser a -> Parser a
-wsL p = p << spacesL
-
--- returns a parser that consumes all following spaces
-wsN :: Parser a -> Parser a 
-wsN p = p << spacesN
-
--- execute two actions and ignore the result of the second one
-(<<) :: Monad m => m a -> m b -> m a
-f << g = do 
-  x <- f 
-  g 
-  return x
-
-
-
--- Token Parsers ---------------------------------------------
---------------------------------------------------------------
+-- ** Token Parsers 
+-----------------------------------------------
 
 -- comma, semicolon, colon ---------------
 
@@ -139,9 +118,12 @@ pIdent = do
   return (x : xs)
 
 
--- comments ------------------------------
+-- ** Comment Parsers 
+-----------------------------------------------
 
--- parses a single comment and following spaces in the next line (e.g. "// this is a comment \n   ")
+-- |The parser saves comments in the AST, so they are available at the pretty printing step.
+--
+-- Parses a single comment and following spaces in the next line.
 pComment :: Parser Comment 
 pComment = try $ do 
   string "//"
@@ -149,7 +131,7 @@ pComment = try $ do
   spacesL
   return cs
 
--- parses an optional comment and returns an empty list (if there is no comment) or a singleton (if there is one)
+-- |Parses an optional comment and returns an empty list (if there is no comment) or a singleton (if there is one).
 pCommentOptional :: Parser [Comment]
 pCommentOptional = do 
   la <- lookAhead $ optionMaybe anyChar
@@ -162,14 +144,14 @@ pCommentOptional = do
              Just c  -> [c]
   return cs
 
--- parses a sequence of comments with optional spaces inbetween and following spaces (e.g. "// comment A \n\n // comment B  \n")
+-- |Parses a sequence of comments with optional spaces inbetween and following spaces 
 pComments :: Parser [Comment]
 pComments = many $ pComment << spacesN
 
 
 
--- SPL-Grammar -----------------------------------------------
---------------------------------------------------------------
+-- ** AST node Parsers
+-----------------------------------------------
 
 -- Program -------------------------------
 
@@ -179,12 +161,14 @@ pProgram = many $ pGlobalEmptyLine <|> pGlobalComment <|> pTypeDeclaration <|> p
 
 -- Global Empty Line --------------------
 
+-- |The Parser saves empty lines separating global declarations in the AST, this function fullfills this purpose.
 pGlobalEmptyLine :: Parser (Commented GlobalDeclaration)
 pGlobalEmptyLine = newline >> spacesL >> return (GlobalEmptyLine, [])
 
 
 -- Global Comment
 
+-- |The Parser saves comments appearing inbetween global declarations in the AST, this function fullfills this purpose.
 pGlobalComment :: Parser (Commented GlobalDeclaration)
 pGlobalComment = do 
   c <- pComment
@@ -260,72 +244,6 @@ pAccess = do
   pRBrack >> spacesN
   cs2 <- try (pComments <|> return [])
   return (expr, [cs1] ++ css ++ [cs2])
-
-
--- Expression ----------------------------
-
-pExpression :: Parser (Commented Expression)
-pExpression = buildExpressionParser table term 
-
-term :: Parser (Commented Expression)
-term = pParenthesized <|> pVariableExpression <|> pIntLiteral
-
-pParenthesized :: Parser (Commented Expression)
-pParenthesized = do
-  pLParen >> spaces 
-  cs1 <- pComments
-  expr <- pExpression
-  pRParen >> spaces 
-  cs2 <- pComments
-  return (Parenthesized expr, [cs1, cs2])
-
-table   = [ 
-            [prefix pMINUS neg, prefix pPLUS pos],
-            [binary pOpPoint],
-            [binary pOpDash],
-            [binary pOpCompare]
-          ]
-
-pVariableExpression ::  Parser (Commented Expression)
-pVariableExpression = do
-  id <- pVariable
-  return (VariableExpression id, [])
-
-pIntLiteral :: Parser (Commented Expression)
-pIntLiteral = do
-  intLit <- pIntLit << spacesN
-  cs1 <- pComments
-  return (IntLiteral intLit, [cs1])
-
-
--- Expression Utilities ------------------
-
-getBiExpr :: Commented Op -> Commented Expression -> Commented Expression -> Commented Expression
-getBiExpr op e1 e2 = (BinaryExpression op e1 e2, [])
-
-getPreExpr :: [[Comment]] -> (Commented Expression -> Commented Expression) -> Commented Expression -> Commented Expression
-getPreExpr css1 f (e, css2) = f (e, css1 ++ css2)  
-
-pBiOperator :: Parser Op -> Parser (Commented Expression -> Commented Expression -> Commented Expression)
-pBiOperator pOp = do
-  op <- pOp << spacesN
-  cs <- pComments
-  return (getBiExpr (op, [cs]))
-
-pPreOperator :: (Commented Expression -> Commented Expression) -> Parser Op -> Parser ((Commented Expression) -> (Commented Expression))
-pPreOperator f pOp = do
-  pOp >> spacesN
-  cs <- pComments
-  return $ getPreExpr [cs] f
-
-binary pOp = Infix (pBiOperator pOp) AssocLeft
-prefix pOp f = Prefix  (pPreOperator f pOp)  
-
-neg :: Commented Expression -> Commented Expression
-neg (e, css) = (Negative (e, tail css), [head css])
-
-pos :: Commented Expression -> Commented Expression
-pos (e, css) = (Positive (e, tail css), [head css])
 
 
 -- Procedure Declaration -----------------
@@ -493,3 +411,92 @@ pExpressionList = do
     (expr, css) <- pExpression
     return (expr, [cs] ++ css)
   return (expr:exprs)
+
+
+-- *** Expressions
+------------------------------------------
+
+-- Expression ----------------------------
+
+pExpression :: Parser (Commented Expression)
+pExpression = buildExpressionParser table term 
+
+term :: Parser (Commented Expression)
+term = pParenthesized <|> pVariableExpression <|> pIntLiteral
+
+pParenthesized :: Parser (Commented Expression)
+pParenthesized = do
+  pLParen >> spaces 
+  cs1 <- pComments
+  expr <- pExpression
+  pRParen >> spaces 
+  cs2 <- pComments
+  return (Parenthesized expr, [cs1, cs2])
+
+table   = [ 
+            [prefix pMINUS neg, prefix pPLUS pos],
+            [binary pOpPoint],
+            [binary pOpDash],
+            [binary pOpCompare]
+          ]
+
+pVariableExpression ::  Parser (Commented Expression)
+pVariableExpression = do
+  id <- pVariable
+  return (VariableExpression id, [])
+
+pIntLiteral :: Parser (Commented Expression)
+pIntLiteral = do
+  intLit <- pIntLit << spacesN
+  cs1 <- pComments
+  return (IntLiteral intLit, [cs1])
+
+
+-- Expression Utilities ------------------
+
+getBiExpr :: Commented Op -> Commented Expression -> Commented Expression -> Commented Expression
+getBiExpr op e1 e2 = (BinaryExpression op e1 e2, [])
+
+getPreExpr :: [[Comment]] -> (Commented Expression -> Commented Expression) -> Commented Expression -> Commented Expression
+getPreExpr css1 f (e, css2) = f (e, css1 ++ css2)  
+
+pBiOperator :: Parser Op -> Parser (Commented Expression -> Commented Expression -> Commented Expression)
+pBiOperator pOp = do
+  op <- pOp << spacesN
+  cs <- pComments
+  return (getBiExpr (op, [cs]))
+
+pPreOperator :: (Commented Expression -> Commented Expression) -> Parser Op -> Parser ((Commented Expression) -> (Commented Expression))
+pPreOperator f pOp = do
+  pOp >> spacesN
+  cs <- pComments
+  return $ getPreExpr [cs] f
+
+binary pOp = Infix (pBiOperator pOp) AssocLeft
+prefix pOp f = Prefix  (pPreOperator f pOp)  
+
+neg :: Commented Expression -> Commented Expression
+neg (e, css) = (Negative (e, tail css), [head css])
+
+pos :: Commented Expression -> Commented Expression
+pos (e, css) = (Positive (e, tail css), [head css])
+
+
+---------------------------------------------------------
+-- *  Utility functions
+---------------------------------------------------------
+
+-- |Consumes a sequence of any spaces except for newlines.
+spacesL :: Parser () 
+spacesL = many (char ' ' <|> char '\t') >> return ()
+
+-- |Consumes a sequence of any spaces including newlines.
+spacesN :: Parser () 
+spacesN = spaces
+
+-- |Execute two monadic actions and ignore the result of the second one
+(<<) :: Monad m => m a -> m b -> m a
+f << g = do 
+  x <- f 
+  g 
+  return x
