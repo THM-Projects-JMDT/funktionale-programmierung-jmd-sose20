@@ -137,6 +137,12 @@ fStatement conf@(Config it n _ _ nls) c (EmptyStatement, css)  = indent it n c
 fVariable :: PrettyPrinter (Commented Variable) 
 fVariable conf@(Config it n _ _ _) c (NamedVariable v, css) =  v 
                                                             ++ fComments conf c (head css)
+-- TODO ArrayAccess: Comments not always work properly
+fVariable conf@(Config it n _ _ _ ) c (ArrayAccess v expr@(_, css), _) = fVariable conf c v
+                                                            ++ "["
+                                                            ++ fExpression conf c expr
+                                                            ++ "]"
+                                                            ++ fComments conf c (concat $ tail css)
 
 -- Expressions ------------------------------------------------
 
