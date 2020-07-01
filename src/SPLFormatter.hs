@@ -123,47 +123,50 @@ fStatement conf@(Config it n _ _ nls) c (AssignStatement v e, css) = indent it n
                                                                   ++ ";"
                                                                   ++ fOptionalComment conf c (css !! 1)
 
-fStatement conf c (StatementComment s, _)                      = fLineComment conf c s    
+fStatement conf c (StatementComment s, _)                         = fLineComment conf c s    
 
-fStatement conf@(Config _ _ _ _ nls) _ (StatementEmptyLine, _) = newline_ nls
+fStatement conf@(Config _ _ _ _ nls) _ (StatementEmptyLine, _)    = newline_ nls
 
-fStatement conf@(Config it n _ _ nls) c (EmptyStatement, css)  = indent it n c
-                                                              ++ ";"
-                                                              ++ fOptionalComment conf c (head css)                                                    
+fStatement conf@(Config it n _ _ nls) c (EmptyStatement, css)     = indent it n c
+                                                                 ++ ";"
+                                                                 ++ fOptionalComment conf c (head css)                                                    
                                                               
 
 -- Variables --------------------------------------------------
 
 fVariable :: PrettyPrinter (Commented Variable) 
-fVariable conf@(Config it n _ _ _) c (NamedVariable v, css) =  v 
-                                                            ++ fComments conf c (head css)
--- TODO ArrayAccess: Comments not always work properly
-fVariable conf@(Config it n _ _ _ ) c (ArrayAccess v expr@(_, css), _) = fVariable conf c v
-                                                            ++ "["
-                                                            ++ fExpression conf c expr
-                                                            ++ "]"
-                                                            ++ fComments conf c (concat $ tail css)
+fVariable conf c (NamedVariable v, css)  = v 
+                                        ++ fComments conf c (head css)
+fVariable conf c (ArrayAccess v expr, _) = fVariable conf c v
+                                        ++ fBracketExpression conf c expr
+                                                
+fBracketExpression :: PrettyPrinter (Commented Expression)
+fBracketExpression conf c (expr, css) = "[" 
+                                     ++ fComments conf c (head css) 
+                                     ++ fExpression conf c (expr, init . tail $ css) 
+                                     ++ "]"
+                                     ++ fComments conf c (last css )
 
 -- Expressions ------------------------------------------------
 
 fExpression :: PrettyPrinter (Commented Expression) 
 fExpression conf c (VariableExpression v, _) = fVariable conf c v
-fExpression conf c (IntLiteral i, css) = i
-                                        ++ fComments conf c (head css)
-fExpression conf c (Parenthesized expr, css) = "("
-                                            ++ fComments conf c (head css)
-                                            ++ fExpression conf c expr
-                                            ++ ")"
-                                            ++ fComments conf c (css !! 1)                                        
+fExpression conf c (IntLiteral i, css) =                  i
+                                                       ++ fComments conf c (head css)
+fExpression conf c (Parenthesized expr, css) =            "("
+                                                       ++ fComments conf c (head css)
+                                                       ++ fExpression conf c expr
+                                                       ++ ")"
+                                                       ++ fComments conf c (css !! 1)       
 fExpression conf c (BinaryExpression op expr1 expr2, _) = fExpression conf c expr1
-                                                          ++ fOperator conf c op
-                                                          ++ fExpression conf c expr2
-fExpression conf c (Negative expr, css) = showOp Minus
-                                        ++ fComments conf c (head css)
-                                        ++ fExpression conf c expr
-fExpression conf c (Positive expr, css) = showOp Plus
-                             ++ fComments conf c (head css)
-                             ++ fExpression conf c expr                             
+                                                       ++ fOperator conf c op
+                                                       ++ fExpression conf c expr2
+fExpression conf c (Negative expr, css) =                 showOp Minus
+                                                       ++ fComments conf c (head css)
+                                                       ++ fExpression conf c expr
+fExpression conf c (Positive expr, css) =                 showOp Plus
+                                                       ++ fComments conf c (head css)
+                                                       ++ fExpression conf c expr                             
 
 -- Operator ---------------------------------------------------
 
