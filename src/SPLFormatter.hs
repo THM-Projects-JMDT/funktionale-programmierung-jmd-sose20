@@ -107,7 +107,7 @@ fStatement :: PrettyPrinter (Commented Statement)
 fStatement conf@(Config it n _ _ nls) c (AssignStatement v e, css) = indent it n c
                                                                   ++ fVariable conf c v 
                                                                   ++ " := "
-                                                                  ++ fComments conf c (css !! 0)
+                                                                  ++ fComments conf c (head css)
                                                                   ++ fExpression conf c e
                                                                   ++ ";"
                                                                   ++ fOptionalComment conf c (css !! 1)
@@ -116,7 +116,8 @@ fStatement conf c (StatementComment s, _)                      = fLineComment co
 
 fStatement conf@(Config _ _ _ _ nls) _ (StatementEmptyLine, _) = newline_ nls
 
-fStatement conf@(Config it n _ _ nls) c (EmptyStatement, css)  = ";"
+fStatement conf@(Config it n _ _ nls) c (EmptyStatement, css)  = indent it n c
+                                                              ++ ";"
                                                               ++ fOptionalComment conf c (head css)                                                    
                                                               
 
