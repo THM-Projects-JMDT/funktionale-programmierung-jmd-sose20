@@ -50,6 +50,17 @@ newline_ nls = case nls of
                  Windows    -> "\r\n"
                  ClassicMac -> "\r"
 
+showOp :: Op -> String
+showOp Lt    = "<" 
+showOp Ne    = "#"
+showOp Plus  = "+"
+showOp Slash = "/"
+showOp Star  = "*"
+showOp Gt    = ">"
+showOp Le    = "<="
+showOp Minus = "-"
+showOp Ge    = ">="
+showOp Eq    = "=" 
                             
 -- for testing -----------------------------------------------
 --------------------------------------------------------------
