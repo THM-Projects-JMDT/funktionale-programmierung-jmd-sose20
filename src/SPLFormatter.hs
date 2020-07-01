@@ -143,3 +143,9 @@ fVariable conf@(Config it n _ _ _) c (NamedVariable v, css) =  v
 fExpression :: PrettyPrinter (Commented Expression) 
 fExpression conf c (VariableExpression v, _) = fVariable conf c v
                                                         
+
+fOperator :: PrettyPrinter (Commented Op)
+fOperator conf c (op, css) = " "
+                           ++ showOp op
+                           ++ " "
+                           ++ fComments conf c (head css) 
