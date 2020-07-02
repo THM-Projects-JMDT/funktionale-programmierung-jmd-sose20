@@ -107,15 +107,58 @@ fComments conf@(Config it n _ _ _) c (cm:cms) = " "
 
 -- GlobalDeclarations -----------------------------------------
 
+fTypeDeclaration :: PrettyPrinter (Commented GlobalDeclaration)
+fTypeDeclaration conf@(Config it n _ _ _) c (TypeDeclaration s t, css) = "type "
+                                                                        ++ fComments conf c (head css)
+                                                                        ++ s
+                                                                        ++ fComments conf c (css !! 1)
+                                                                        ++ " = "
+                                                                        ++ fComments conf c (css !! 2)
+                                                                        ++ fTypeExpression conf c t
+                                                                        ++ ";"
+                                                                        ++ fOptionalComment conf c (css !! 3)
+fTypeDeclaration conf@(Config _ _ _ _ nls) _ (GlobalEmptyLine, _)      = newline_ nls
+fTypeDeclaration conf c (GlobalComment s, _)                           = fLineComment conf c s   
+
 -- TypeExpressions --------------------------------------------
 
+fTypeExpression :: PrettyPrinter (Commented TypeExpression)
+fTypeExpression conf@(Config it n _ _ _) c (NamedTypeExpression s, css) = s 
+                                                                        ++ fComments conf c (head css)
+fTypeExpression conf@(Config it n _ _ _) c (ArrayTypeExpression s t, css) = "array"
+                                                                        ++ fComments conf c (css !! 0)
+                                                                        ++ " ["
+                                                                        ++ fComments conf c (css !! 1)
+                                                                        ++ s 
+                                                                        ++ fComments conf c (css !! 2)
+                                                                        ++ "] "
+                                                                        ++ fComments conf c (css !! 3)
+                                                                        ++ "of "
+                                                                        ++ fComments conf c (css !! 4)
+                                                                        ++ fTypeExpression conf c t                                            
+                                                            
 -- ParameterDeclaration ---------------------------------------
+
+fParameterDeclaration:: PrettyPrinter (Commented ParameterDeclaration)
+fParameterDeclaration conf@(Config it n _ _ _) c (ParameterDeclaration s e b, css) = s 
+                                                                                --- todo
 
 -- VariableDeclaration ----------------------------------------
 
+fVariableDeclaration:: PrettyPrinter (Commented VariableDeclaration)
+fVariableDeclaration conf@(Config it n _ _ _) c (VariableDeclaration s t, css) = "var "
+                                                                             ++ fComments conf c (head css)
+                                                                             ++ s 
+                                                                             ++ fComments conf c (css !! 1)
+                                                                             ++ " : "
+                                                                             ++ fComments conf c (css !! 2)
+                                                                             ++ fTypeExpression conf c t 
+                                                                             ++ ";"
+                                                                             ++ fOptionalComment conf c (css !! 3)
+                                                                             
 -- Statements -------------------------------------------------
 fStatement :: PrettyPrinter (Commented Statement)  
-fStatement conf@(Config it n _ _ nls) c (AssignStatement v e, css) = indent it n c
+fStatement conf@(Config it n _ _ _) c (AssignStatement v e, css) = indent it n c
                                                                   ++ fVariable conf c v 
                                                                   ++ " := "
                                                                   ++ fComments conf c (head css)
@@ -123,11 +166,19 @@ fStatement conf@(Config it n _ _ nls) c (AssignStatement v e, css) = indent it n
                                                                   ++ ";"
                                                                   ++ fOptionalComment conf c (css !! 1)
 
+fStatement conf@(Config it n _ _ _) c (WhileStatement e s, css) = indent it n c
+                                                                  ++ "while ("
+                                                                  ++ fExpression conf c e
+                                                                  ++ ")"
+                                                                  ++ fComments conf c (head css)  
+                                                                  ++ fStatement conf (c+1) s    
+                                                                  ++ fOptionalComment conf c (css !! 1)                                                            
+
 fStatement conf c (StatementComment s, _)                         = fLineComment conf c s    
 
 fStatement conf@(Config _ _ _ _ nls) _ (StatementEmptyLine, _)    = newline_ nls
 
-fStatement conf@(Config it n _ _ nls) c (EmptyStatement, css)     = indent it n c
+fStatement conf@(Config it n _ _ _) c (EmptyStatement, css)     = indent it n c
                                                                  ++ ";"
                                                                  ++ fOptionalComment conf c (head css)                                                    
                                                               
