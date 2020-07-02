@@ -233,7 +233,7 @@ pArrayAccess :: Parser (Commented Variable)
 pArrayAccess = do 
   nVar <- pNamedVariable
   exprs <- many1 pAccess
-  let acc = foldl (\v e -> (ArrayAccess v e, [])) nVar exprs
+  let acc = foldl (\v expr@(e, css) -> (ArrayAccess v expr, css)) nVar exprs
   return acc
 
 pAccess :: Parser (Commented Expression)
