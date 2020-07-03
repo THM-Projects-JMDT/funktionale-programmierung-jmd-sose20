@@ -218,10 +218,11 @@ fStatement conf@(Config it n _ _ nls) c (WhileStatement e s, css)  = indent it n
                                                                      ++ fComments conf c (css !! 0)
                                                                      ++ "("
                                                                      ++ noSpaceIfEmpty (css !! 1)
+                                                                     ++ fComments conf c (css !! 1)
                                                                      ++ fExpression conf c e
                                                                      ++ ") "
                                                                      ++ fComments conf c (css !! 2)  
-                                                                     ++ fStatement conf (c + 1) s                                                            
+                                                                     ++ fStatement conf c s                                                            
 
 fStatement conf c (StatementComment s, _)                           = fLineComment conf c s    
 
@@ -250,26 +251,35 @@ fBracketExpression conf c (expr, css) = "["
 fExpression :: PrettyPrinter (Commented Expression) 
 fExpression conf c (VariableExpression v, _)            = fVariable conf c v
 fExpression conf c (IntLiteral i, css)                  = i
+                                                          ++ noSpaceIfEmpty (head css)
                                                           ++ fComments conf c (head css)
 fExpression conf c (Parenthesized expr, css)            =  "("
+                                                          ++ noSpaceIfEmpty (head css)
                                                           ++ fComments conf c (head css)
                                                           ++ fExpression conf c expr
                                                           ++ ")"
+                                                          ++ noSpaceIfEmpty (css !! 1)
                                                           ++ fComments conf c (css !! 1)       
 fExpression conf c (BinaryExpression op expr1 expr2, _) = fExpression conf c expr1
+                                                          ++ spaceIfEmpty (last $ peekComments expr1)
                                                           ++ fOperator conf c op
                                                           ++ fExpression conf c expr2
 fExpression conf c (Negative expr, css)                 = showOp Minus
+                                                          ++ noSpaceIfEmpty (head css)
                                                           ++ fComments conf c (head css)
                                                           ++ fExpression conf c expr
 fExpression conf c (Positive expr, css)                 = showOp Plus
+                                                          ++ noSpaceIfEmpty (head css)
                                                           ++ fComments conf c (head css)
                                                           ++ fExpression conf c expr                             
 
 -- Operator ---------------------------------------------------
 
 fOperator :: PrettyPrinter (Commented Op)
-fOperator conf c (op, css) = " "
-                             ++ showOp op
-                             ++ " "
-                             ++ fComments conf c (head css) 
+fOperator conf c (op, css) = showOp op
+                          ++ " "
+                          ++ fComments conf c (head css) 
+
+fOperator_ :: PrettyPrinter (Commented Op)
+fOperator_ conf c opC      = " "
+                          ++ fOperator conf c opC

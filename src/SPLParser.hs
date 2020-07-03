@@ -442,8 +442,8 @@ table   = [
 
 pVariableExpression ::  Parser (Commented Expression)
 pVariableExpression = do
-  id <- pVariable
-  return (VariableExpression id, [])
+  (id, css) <- pVariable
+  return (VariableExpression (id, css), css)
 
 pIntLiteral :: Parser (Commented Expression)
 pIntLiteral = do
@@ -455,7 +455,7 @@ pIntLiteral = do
 -- Expression Utilities ------------------
 
 getBiExpr :: Commented Op -> Commented Expression -> Commented Expression -> Commented Expression
-getBiExpr op e1 e2 = (BinaryExpression op e1 e2, [])
+getBiExpr op expr1@(e1, css1) expr2@(e2, css2) = (BinaryExpression op expr1 expr2, css1 ++  css2)
 
 getPreExpr :: [[Comment]] -> (Commented Expression -> Commented Expression) -> Commented Expression -> Commented Expression
 getPreExpr css1 f (e, css2) = f (e, css1 ++ css2)  
