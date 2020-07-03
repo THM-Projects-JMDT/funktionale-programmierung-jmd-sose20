@@ -179,7 +179,6 @@ fParameterDeclaration conf@(Config it n _ _ _) c (ParameterDeclaration s t b, cs
                                                                                   ++ ": "
                                                                                   ++ fComments conf c (css !! 2)
                                                                                   ++ fTypeExpression conf c t
-                                                                                --- todo
 
 -- VariableDeclaration ----------------------------------------
 
@@ -207,7 +206,19 @@ fStatement conf@(Config it n _ _ _) c (AssignStatement v e, css)  = indent it n 
                                                                     ++ ";"
                                                                     ++ fOptionalComment conf c (css !! 1)
 
-fStatement conf@(Config it n _ _ nls) c (CallStatement s e, css)   = ""
+fStatement conf@(Config it n _ _ nls) c (CallStatement s es, css)  = indent it n c
+                                                                    ++ s 
+                                                                    ++ noSpaceIfEmpty (css !! 0)
+                                                                    ++ fComments conf c (css !! 0)
+                                                                    ++ "("
+                                                                    ++ noSpaceIfEmpty (css !! 1)
+                                                                    ++ fComments conf c (css !! 1)
+                                                                    ++ fExpressionList conf c es
+                                                                    ++ ")"
+                                                                    ++ noSpaceIfEmpty (css !! 2)
+                                                                    ++ fComments conf c (css !! 2)
+                                                                    ++ ";"
+                                                                    ++ fOptionalComment conf  c (css !! 3)
                                                             -- todo
 
 fStatement conf@(Config it n _ _ nls) c (CompoundStatement s, css) = ""
@@ -248,9 +259,11 @@ fVariable conf c (ArrayAccess v expr, _) = fVariable conf c v
                                                 
 fBracketExpression :: PrettyPrinter (Commented Expression)
 fBracketExpression conf c (expr, css) = "[" 
+                                        ++ noSpaceIfEmpty (head css)
                                         ++ fComments conf c (head css) 
                                         ++ fExpression conf c (expr, init . tail $ css) 
                                         ++ "]"
+                                        ++ noSpaceIfEmpty (last css)
                                         ++ fComments conf c (last css )
 
 -- Expressions ------------------------------------------------
@@ -278,7 +291,20 @@ fExpression conf c (Negative expr, css)                 = showOp Minus
 fExpression conf c (Positive expr, css)                 = showOp Plus
                                                           ++ noSpaceIfEmpty (head css)
                                                           ++ fComments conf c (head css)
-                                                          ++ fExpression conf c expr                             
+                                                          ++ fExpression conf c expr     
+
+fExpressionList :: PrettyPrinter [Commented Expression]
+fExpressionList conf c []                               = ""
+fExpressionList conf c [expr]                           = fExpression conf c expr    
+fExpressionList conf c (e:es)                           = fExpression conf c e 
+                                                          ++ concatMap (fCommaExpression conf c) es 
+
+fCommaExpression :: PrettyPrinter (Commented Expression) 
+fCommaExpression conf c (e, css)                        = ", "
+                                                          ++ fComments conf c (css !! 1)
+                                                          ++ fExpression conf c (e, tail css)
+
+
 
 -- Operator ---------------------------------------------------
 
