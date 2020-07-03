@@ -171,7 +171,14 @@ fTypeExpression conf@(Config it n _ _ _) c (ArrayTypeExpression s t, css) = "arr
 -- ParameterDeclaration ---------------------------------------
 
 fParameterDeclaration:: PrettyPrinter (Commented ParameterDeclaration)
-fParameterDeclaration conf@(Config it n _ _ _) c (ParameterDeclaration s e b, css) = "" 
+fParameterDeclaration conf@(Config it n _ _ _) c (ParameterDeclaration s t b, css) = (if b then "ref " else "")
+                                                                                  ++ fComments conf c (css !! 0)
+                                                                                  ++ s 
+                                                                                  ++ noSpaceIfEmpty (css !! 1)
+                                                                                  ++ fComments conf c (css !! 1)
+                                                                                  ++ ": "
+                                                                                  ++ fComments conf c (css !! 2)
+                                                                                  ++ fTypeExpression conf c t
                                                                                 --- todo
 
 -- VariableDeclaration ----------------------------------------
