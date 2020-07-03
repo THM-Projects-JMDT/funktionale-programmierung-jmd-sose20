@@ -196,9 +196,12 @@ fVariableDeclaration conf@(Config it n _ _ _) c (VariableDeclaration s t, css) =
                                                                                  ++ fOptionalComment conf c (css !! 3)
                                                                              
 -- Statements -------------------------------------------------
+fStatement_ :: PrettyPrinter (Commented Statement)
+fStatement_ conf@(Config it n _ _ _) c s                          = indent it n c 
+                                                                    ++ fStatement conf c s 
+
 fStatement :: PrettyPrinter (Commented Statement)  
-fStatement conf@(Config it n _ _ _) c (AssignStatement v e, css)  = indent it n c
-                                                                    ++ fVariable conf c v
+fStatement conf@(Config it n _ _ _) c (AssignStatement v e, css)  = fVariable conf c v
                                                                     ++ spaceIfEmpty (last $ peekComments v)
                                                                     ++ ":= "
                                                                     ++ fComments conf c (head css)
@@ -206,8 +209,7 @@ fStatement conf@(Config it n _ _ _) c (AssignStatement v e, css)  = indent it n 
                                                                     ++ ";"
                                                                     ++ fOptionalComment conf c (css !! 1)
 
-fStatement conf@(Config it n _ _ nls) c (CallStatement s es, css)  = indent it n c
-                                                                    ++ s 
+fStatement conf@(Config it n _ _ nls) c (CallStatement s es, css)  = s 
                                                                     ++ noSpaceIfEmpty (css !! 0)
                                                                     ++ fComments conf c (css !! 0)
                                                                     ++ "("
@@ -219,20 +221,21 @@ fStatement conf@(Config it n _ _ nls) c (CallStatement s es, css)  = indent it n
                                                                     ++ fComments conf c (css !! 2)
                                                                     ++ ";"
                                                                     ++ fOptionalComment conf  c (css !! 3)
-                                                            -- todo
 
-fStatement conf@(Config it n _ _ nls) c (CompoundStatement s, css) = ""
-                                                            -- todo
+fStatement conf@(Config it n _ _ nls) c (CompoundStatement sts, css) = "{"
+                                                                    ++ fOptionalComment conf c (css !! 0)
+                                                                    ++ concatMap (\s -> fStatement_ conf (c + 1) s) sts
+                                                                    ++ indent it n c
+                                                                    ++ "}"
+                                                                    ++ fOptionalComment conf c (css !! 1)
 
-fStatement conf@(Config it n _ _ _) c (EmptyStatement, css)        = indent it n c
-                                                                     ++ ";"
+fStatement conf@(Config it n _ _ _) c (EmptyStatement, css)        = ";"
                                                                      ++ fOptionalComment conf c (head css)                                                    
 
 fStatement conf@(Config it n _ _ nls) c (IfStatement e s ms, css)  = ""
                                                                 -- todo                                                      
 
-fStatement conf@(Config it n _ _ nls) c (WhileStatement e s, css)  = indent it n c
-                                                                     ++ "while "
+fStatement conf@(Config it n _ _ nls) c (WhileStatement e s, css)  = "while "
                                                                      ++ fComments conf c (css !! 0)
                                                                      ++ "("
                                                                      ++ noSpaceIfEmpty (css !! 1)
@@ -242,7 +245,7 @@ fStatement conf@(Config it n _ _ nls) c (WhileStatement e s, css)  = indent it n
                                                                      ++ fComments conf c (css !! 2)  
                                                                      ++ fStatement conf c s                                                            
 
-fStatement conf c (StatementComment s, _)                           = fLineComment conf c s    
+fStatement conf c (StatementComment s, _)                           = fComment conf c s    
 
 fStatement conf@(Config _ _ _ _ nls) _ (StatementEmptyLine, _)      = newline_ nls
 
