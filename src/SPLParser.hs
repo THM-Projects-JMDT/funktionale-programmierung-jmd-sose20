@@ -348,7 +348,7 @@ pCompoundStatement = do
   pLCurl  >> spacesL
   cs1 <- pCommentOptional
   stmt <- many pStatement 
-  pRCurl >> spacesN
+  pRCurl >> spacesL
   cs2 <- pCommentOptional
   return (CompoundStatement stmt, [cs1, cs2])
 
