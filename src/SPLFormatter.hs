@@ -169,7 +169,7 @@ fGlobalDeclaration conf c (GlobalComment s, _)                                  
 -- TypeExpressions --------------------------------------------
 
 fTypeExpression :: PrettyPrinter (Commented TypeExpression)
-fTypeExpression conf@(Config it n _ _ _) c (NamedTypeExpression s, css) = s 
+fTypeExpression conf@(Config it n _ _ _) c (NamedTypeExpression s, css) = s
                                                                           ++ noSpaceIfEmpty (head css)
                                                                           ++ fComments conf c (head css)
 fTypeExpression conf@(Config it n _ _ _) c (ArrayTypeExpression s t, css) = "array" 
@@ -222,6 +222,7 @@ fVariableDeclaration conf@(Config it n _ _ _) c (VariableDeclaration s t, css) =
                                                                              
 -- Statements -------------------------------------------------
 fStatement_ :: PrettyPrinter (Commented Statement)
+fStatement_ conf c s@(StatementEmptyLine, _)                      = fStatement conf c s
 fStatement_ conf@(Config it n _ _ _) c s                          = indent it n c 
                                                                     ++ fStatement conf c s 
 
