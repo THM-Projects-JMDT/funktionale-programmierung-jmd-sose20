@@ -189,11 +189,11 @@ fTypeExpression conf@(Config it n _ _ _) c (ArrayTypeExpression s t, css) = "arr
                                                             
 -- ParameterDeclaration ---------------------------------------
 fParameterDeclarations :: PrettyPrinter [(Commented ParameterDeclaration)]
-fParameterDeclarations _ _ [] = ""
+fParameterDeclarations _ _ []                         = ""
 fParameterDeclarations conf@(Config it n _ _ _) c [p] = fParameterDeclaration conf c p
-fParameterDeclarations conf@(Config it n _ _ _) c pl = fParameterDeclaration conf c (head pl)
-                                                    ++ ", "
-                                                    ++ fParameterDeclarations conf c (tail pl)
+fParameterDeclarations conf@(Config it n _ _ _) c pl  = fParameterDeclaration conf c (head pl)
+                                                     ++ ", "
+                                                     ++ fParameterDeclarations conf c (tail pl)
 
 fParameterDeclaration :: PrettyPrinter (Commented ParameterDeclaration)
 fParameterDeclaration conf@(Config it n _ _ _) c (ParameterDeclaration s t b, css) = (if b then "ref " else "")
