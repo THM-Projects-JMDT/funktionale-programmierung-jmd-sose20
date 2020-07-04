@@ -389,17 +389,17 @@ pIfStatement = do
   cs3 <- pComments
   stmt <- pStatement
   optElse <- try (optionMaybe $ spacesN >> pComments >> pElseStatement)
-  let optstmt = case optElse of 
-                  Nothing    -> Nothing
-                  Just stmt2 -> Just stmt2
-  return (IfStatement expr stmt optstmt, [cs1, cs2, cs3])
+  let (optstmt, cs4) = case optElse of 
+                  Nothing    -> (Nothing, [])
+                  Just (stmt2, cs) -> (Just stmt2, cs)
+  return (IfStatement expr stmt optstmt, [cs1, cs2, cs3, cs4])
 
-pElseStatement  :: Parser (Commented Statement)
+pElseStatement  :: Parser ((Commented Statement), [Comment])
 pElseStatement = do 
   pElse >> spacesN
   cs1 <- pComments
-  (stmt, css) <- pStatement
-  return (stmt, [cs1] ++ css)
+  stmt <- pStatement
+  return (stmt, cs1)
 
 pCallStatement :: Parser (Commented Statement)
 pCallStatement = do 
