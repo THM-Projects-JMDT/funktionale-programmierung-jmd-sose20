@@ -86,7 +86,7 @@ run p = runParser p () ""
 testFormat :: String -> Parser a -> PrettyPrinter a -> IO ()
 testFormat s p f = putStrLn $ case run p s of 
                                 Left err  -> "Parser failed: " ++ show err
-                                Right r -> f defaultConfig 0 r
+                                Right r -> f defaultConfig 2 r
 
 
 
@@ -222,7 +222,7 @@ fVariableDeclaration conf@(Config it n _ _ _) c (VariableDeclaration s t, css) =
                                                                                  ++ fTypeExpression conf c t 
                                                                                  ++ ";"
                                                                                  ++ fOptionalComment conf c (css !! 3)
-fVariableDeclaration conf@(Config it n _ _ _) c (VariableDeclarationComment cs, _) = fLineComment conf c cs                                                                              
+fVariableDeclaration conf c (VariableDeclarationComment cs, _) = fLineComment conf c cs                                                                              
                                                                              
 -- Statements -------------------------------------------------
 fStatement_ :: PrettyPrinter (Commented Statement)
@@ -262,9 +262,17 @@ fStatement conf@(Config it n _ _ nls) c (CompoundStatement sts, css) = "{"
 fStatement conf@(Config it n _ _ _) c (EmptyStatement, css)        = ";"
                                                                      ++ fOptionalComment conf c (head css)                                                    
 
-fStatement conf@(Config it n _ _ nls) c (IfStatement e s ms, css)  = ""
-                                                                -- todo                                                      
-
+-- TODO if: Fix else Position? (may depend on the setting leftCurlNextLine)
+fStatement conf@(Config it n _ _ nls) c (IfStatement e s ms, css)  = "if "                                                    
+                                                                  ++ fComments conf c (head css)
+                                                                  ++ "("
+                                                                  ++ noSpaceIfEmpty (css !! 1)
+                                                                  ++ fComments conf c (css !! 1)
+                                                                  ++ fExpression conf c e
+                                                                  ++ ") "
+                                                                  ++ fComments conf c (css !! 2)  
+                                                                  ++ fStatement conf c s
+                                                                  ++ fElse conf c (ms, css !! 3)                                                                 
 fStatement conf@(Config it n _ _ nls) c (WhileStatement e s, css)  = "while "
                                                                      ++ fComments conf c (head css)
                                                                      ++ "("
@@ -279,7 +287,14 @@ fStatement conf c (StatementComment s, _)                           = fComment c
 
 fStatement conf@(Config _ _ _ _ nls) _ (StatementEmptyLine, _)      = newline_ nls
 
+fElse :: PrettyPrinter (Maybe (Commented Statement), [Comment])
+fElse conf c (Nothing, _) = ""
+fElse conf@(Config it n _ _ _)  c (Just stmd, css) = indent it n c
+                                                  ++ "else "
+                                                  ++ fComments conf c css
+                                                  ++ fStatement conf c stmd
 
+                                        
 
 -- Variables --------------------------------------------------
 
