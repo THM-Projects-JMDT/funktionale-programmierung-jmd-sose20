@@ -71,6 +71,9 @@ spaceIfEmpty xs = ifEmptyElse xs " " ""
 noSpaceIfEmpty :: [a] -> String
 noSpaceIfEmpty xs = ifEmptyElse xs "" " "
 
+newLineIfEmpty :: [a] -> NewLineStyle -> String
+newLineIfEmpty xs nls = ifEmptyElse xs (newline_ nls) ""
+
 peekComments :: Commented a -> [[Comment]]
 peekComments (_, css) = css
                             
@@ -154,9 +157,9 @@ fGlobalDeclaration conf@(Config it n _ _ nls) c (ProcedureDeclaration i p v s, c
                                                                                    ++ ") "
                                                                                    ++ fComments conf c (css !! 3)
                                                                                    ++ "{"
-                                                                                   ++ newline_ nls
                                                                                    ++ noSpaceIfEmpty (css !! 4)
-                                                                                   ++ fComments conf c1 (css !! 4)
+                                                                                   ++ fComments conf c (css !! 4)
+                                                                                   ++ newLineIfEmpty (css !! 4) nls
                                                                                    ++ concatMap (fVariableDeclaration conf c1) v
                                                                                    ++ concatMap (fStatement_ conf c1) s
                                                                                    ++ indent it n c
