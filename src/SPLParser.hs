@@ -155,8 +155,13 @@ pComments = many $ pComment << spacesN
 
 -- Program -------------------------------
 
-pProgram :: Parser [Commented GlobalDeclaration]
-pProgram = many $ pGlobalEmptyLine <|> pGlobalComment <|> pTypeDeclaration <|> pProcedureDeclaration
+pProgram :: Parser Program
+pProgram = do
+  glob <- many $ pGlobalEmptyLine 
+             <|> pGlobalComment 
+             <|> pTypeDeclaration 
+             <|> pProcedureDeclaration
+  return (Program glob)
 
 
 -- Global Empty Line --------------------
