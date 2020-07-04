@@ -264,8 +264,8 @@ pProcedureDeclaration = do
   pDecs <- option [] pParameterDeclarationList
   pRParen >> spacesN
   cs4 <- pComments
-  pLCurl >> spacesN
-  cs5 <- pComments
+  pLCurl >> spacesL
+  cs5 <- pCommentOptional
   vDecs <- many pVariableDeclaration
   stmts <- many pStatement
   pRCurl >> spacesL
