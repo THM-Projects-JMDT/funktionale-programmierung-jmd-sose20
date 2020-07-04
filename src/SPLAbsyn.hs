@@ -7,9 +7,9 @@ SPL-AST structure - extended with comments
 -}
 
 
-data Program              = Program (Commented GlobalDeclaration)
-                          deriving (Eq, Show) 
-data GlobalDeclaration    = TypeDeclaration String (Commented TypeExpression) 
+data Program              = Program [Commented GlobalDeclaration]
+                          deriving (Eq, Show)
+data GlobalDeclaration    = TypeDeclaration String (Commented TypeExpression)
                           | ProcedureDeclaration String [Commented ParameterDeclaration] [Commented VariableDeclaration] [Commented Statement]
                           | GlobalComment Comment
                           | GlobalEmptyLine
@@ -17,15 +17,15 @@ data GlobalDeclaration    = TypeDeclaration String (Commented TypeExpression)
 data TypeExpression       = ArrayTypeExpression IntString (Commented TypeExpression)
                           | NamedTypeExpression String
                           deriving (Eq, Show)
-data ParameterDeclaration = ParameterDeclaration String (Commented TypeExpression) Bool 
+data ParameterDeclaration = ParameterDeclaration String (Commented TypeExpression) Bool
                           deriving (Eq, Show)
-data VariableDeclaration  = VariableDeclaration String (Commented TypeExpression) 
+data VariableDeclaration  = VariableDeclaration String (Commented TypeExpression)
                           deriving (Eq, Show)
-data Statement            = AssignStatement (Commented Variable) (Commented Expression) 
+data Statement            = AssignStatement (Commented Variable) (Commented Expression)
                           | CallStatement String [Commented Expression]
-                          | CompoundStatement [Commented Statement] 
+                          | CompoundStatement [Commented Statement]
                           | EmptyStatement
-                          | IfStatement (Commented Expression) (Commented Statement) (Maybe (Commented Statement)) 
+                          | IfStatement (Commented Expression) (Commented Statement) (Maybe (Commented Statement))
                           | WhileStatement (Commented Expression) (Commented Statement)
                           | StatementComment Comment
                           | StatementEmptyLine
@@ -45,5 +45,5 @@ type Commented a = (a, [[Comment]])
 type Comment = String
 type IntString = String
 
-data Op = Lt | Ne | Asgn | Plus | Slash | Star | Gt | Le | Minus | Ge | Eq 
-          deriving (Eq, Show) 
+data Op = Lt | Ne | Asgn | Plus | Slash | Star | Gt | Le | Minus | Ge | Eq
+          deriving (Eq, Show)
