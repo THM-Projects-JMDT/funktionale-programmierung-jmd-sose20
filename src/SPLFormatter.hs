@@ -83,7 +83,7 @@ run p = runParser p () ""
 testFormat :: String -> Parser a -> PrettyPrinter a -> IO ()
 testFormat s p f = putStrLn $ case run p s of 
                                 Left err  -> "Parser failed: " ++ show err
-                                Right r -> f defaultConfig 2 r
+                                Right r -> f defaultConfig 0 r
 
 
 
@@ -140,9 +140,29 @@ fGlobalDeclaration conf@(Config it n _ _ _) c (TypeDeclaration s t, css)        
                                                                                     ++ fTypeExpression conf c t
                                                                                     ++ ";"
                                                                                     ++ fOptionalComment conf c (css !! 3)
-fGlobalDeclaration conf@(Config it n _ _ _) c (ProcedureDeclaration i p v s, css) = ""    
-                                                                                -- todo
-
+fGlobalDeclaration conf@(Config it n _ _ nls) c (ProcedureDeclaration i p v s, css) = let c1 = c + 1 in
+                                                                                      indent it n c
+                                                                                   ++ "proc "
+                                                                                   ++ fComments conf c1 (head css)
+                                                                                   ++ i
+                                                                                   ++ noSpaceIfEmpty (css !! 1)
+                                                                                   ++ fComments conf c1 (css !! 1)
+                                                                                   ++ "("
+                                                                                   ++ noSpaceIfEmpty (css !! 2)
+                                                                                   ++ fComments conf c1 (css !! 2)
+                                                                                   ++ fParameterDeclarations conf c1 p
+                                                                                   ++ ") "
+                                                                                   ++ fComments conf c1 (css !! 3)
+                                                                                   ++ "{"
+                                                                                   ++ newline_ nls
+                                                                                   ++ noSpaceIfEmpty (css !! 4)
+                                                                                   ++ fComments conf c1 (css !! 4)
+                                                                                   ++ concatMap (fVariableDeclaration conf c1) v
+                                                                                   ++ concatMap (fStatement_ conf c1) s
+                                                                                   ++ indent it n c
+                                                                                   ++ "}"
+                                                                                   ++ noSpaceIfEmpty (css !! 5)
+                                                                                   ++ fOptionalComment conf c (css !! 5)
 fGlobalDeclaration conf@(Config _ _ _ _ nls) _ (GlobalEmptyLine, _)               = newline_ nls
 fGlobalDeclaration conf c (GlobalComment s, _)                                    = fLineComment conf c s   
 
