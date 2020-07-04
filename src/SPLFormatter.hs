@@ -123,9 +123,8 @@ fComments_ conf c cms = fComments' True conf c cms
 
 -- Programm ---------------------------------------------------
 
-fProgram :: PrettyPrinter (Commented Program)
-fProgram conf@(Config it n _ _ _) c (Program g, css) = fGlobalDeclaration conf c g
-                                                    -- todo
+fProgram :: PrettyPrinter Program
+fProgram conf@(Config it n _ _ _) c (Program gl) = concatMap (fGlobalDeclaration conf c) gl
 
 -- GlobalDeclarations -----------------------------------------
 
