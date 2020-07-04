@@ -199,7 +199,7 @@ pTypeDeclaration = do
 -- TypeExpression ------------------------
 
 pTypeExpression :: Parser (Commented TypeExpression)
-pTypeExpression = pArrayTypeExpression <|> pNamedTypeExpression
+pTypeExpression = try pArrayTypeExpression <|> pNamedTypeExpression
 
 pNamedTypeExpression :: Parser (Commented TypeExpression)
 pNamedTypeExpression = do
