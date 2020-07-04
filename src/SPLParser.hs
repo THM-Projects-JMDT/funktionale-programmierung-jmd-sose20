@@ -157,6 +157,7 @@ pComments = many $ pComment << spacesN
 
 pProgram :: Parser Program
 pProgram = do
+  spacesN
   glob <- many $ pGlobalEmptyLine 
              <|> pGlobalComment 
              <|> pTypeDeclaration 
