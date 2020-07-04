@@ -173,8 +173,8 @@ fTypeExpression conf@(Config it n _ _ _) c (NamedTypeExpression s, css) = s
                                                                           ++ noSpaceIfEmpty (head css)
                                                                           ++ fComments conf c (head css)
 fTypeExpression conf@(Config it n _ _ _) c (ArrayTypeExpression s t, css) = "array" 
-                                                                            ++ noSpaceIfEmpty (css !! 0)
-                                                                            ++ fComments conf c (css !! 0)
+                                                                            ++ noSpaceIfEmpty (head css)
+                                                                            ++ fComments conf c (head css)
                                                                             ++ "["
                                                                             ++ noSpaceIfEmpty (css !! 1)
                                                                             ++ fComments conf c (css !! 1)
@@ -197,7 +197,7 @@ fParameterDeclarations conf@(Config it n _ _ _) c pl  = fParameterDeclaration co
 
 fParameterDeclaration :: PrettyPrinter (Commented ParameterDeclaration)
 fParameterDeclaration conf@(Config it n _ _ _) c (ParameterDeclaration s t b, css) = (if b then "ref " else "")
-                                                                                  ++ fComments conf c (css !! 0)
+                                                                                  ++ fComments conf c (head css)
                                                                                   ++ s 
                                                                                   ++ noSpaceIfEmpty (css !! 1)
                                                                                   ++ fComments conf c (css !! 1)
@@ -235,8 +235,8 @@ fStatement conf@(Config it n _ _ _) c (AssignStatement v e, css)  = fVariable co
                                                                     ++ fOptionalComment conf c (css !! 1)
 
 fStatement conf@(Config it n _ _ nls) c (CallStatement s es, css)  = s 
-                                                                    ++ noSpaceIfEmpty (css !! 0)
-                                                                    ++ fComments conf c (css !! 0)
+                                                                    ++ noSpaceIfEmpty (head css)
+                                                                    ++ fComments conf c (head css)
                                                                     ++ "("
                                                                     ++ noSpaceIfEmpty (css !! 1)
                                                                     ++ fComments conf c (css !! 1)
@@ -248,7 +248,7 @@ fStatement conf@(Config it n _ _ nls) c (CallStatement s es, css)  = s
                                                                     ++ fOptionalComment conf  c (css !! 3)
 
 fStatement conf@(Config it n _ _ nls) c (CompoundStatement sts, css) = "{"
-                                                                    ++ fOptionalComment conf c (css !! 0)
+                                                                    ++ fOptionalComment conf c (head css)
                                                                     ++ concatMap (\s -> fStatement_ conf (c + 1) s) sts
                                                                     ++ indent it n c
                                                                     ++ "}"
@@ -261,7 +261,7 @@ fStatement conf@(Config it n _ _ nls) c (IfStatement e s ms, css)  = ""
                                                                 -- todo                                                      
 
 fStatement conf@(Config it n _ _ nls) c (WhileStatement e s, css)  = "while "
-                                                                     ++ fComments conf c (css !! 0)
+                                                                     ++ fComments conf c (head css)
                                                                      ++ "("
                                                                      ++ noSpaceIfEmpty (css !! 1)
                                                                      ++ fComments conf c (css !! 1)
