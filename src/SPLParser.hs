@@ -301,7 +301,10 @@ pParameterDeclaration = do
 -- Variable Declaration ------------------
 
 pVariableDeclaration :: Parser (Commented VariableDeclaration)
-pVariableDeclaration = do
+pVariableDeclaration = pVariableDeclaration_ <|> pVariableDeclarationComment
+
+pVariableDeclaration_ :: Parser (Commented VariableDeclaration)
+pVariableDeclaration_ = do
   pVar >> spacesN
   cs1 <- pComments 
   id <- pIdent << spacesN
@@ -313,6 +316,10 @@ pVariableDeclaration = do
   cs4 <- pCommentOptional
   return (VariableDeclaration id tExpr, [cs1, cs2, cs3, cs4])
 
+pVariableDeclarationComment :: Parser (Commented VariableDeclaration)
+pVariableDeclarationComment = do 
+  c <- pComment
+  return (VariableDeclarationComment c, [])
 
 -- Statements ----------------------------
 

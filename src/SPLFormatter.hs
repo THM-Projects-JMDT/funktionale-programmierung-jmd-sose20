@@ -210,7 +210,7 @@ fParameterDeclaration conf@(Config it n _ _ _) c (ParameterDeclaration s t b, cs
 
 -- VariableDeclaration ----------------------------------------
 
-fVariableDeclaration:: PrettyPrinter (Commented VariableDeclaration)
+fVariableDeclaration :: PrettyPrinter (Commented VariableDeclaration)
 fVariableDeclaration conf@(Config it n _ _ _) c (VariableDeclaration s t, css) = indent it n c
                                                                                  ++ "var "
                                                                                  ++ fComments conf c (head css)
@@ -222,6 +222,7 @@ fVariableDeclaration conf@(Config it n _ _ _) c (VariableDeclaration s t, css) =
                                                                                  ++ fTypeExpression conf c t 
                                                                                  ++ ";"
                                                                                  ++ fOptionalComment conf c (css !! 3)
+fVariableDeclaration conf@(Config it n _ _ _) c (VariableDeclarationComment cs, _) = fLineComment conf c cs                                                                              
                                                                              
 -- Statements -------------------------------------------------
 fStatement_ :: PrettyPrinter (Commented Statement)

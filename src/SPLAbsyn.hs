@@ -20,6 +20,7 @@ data TypeExpression       = ArrayTypeExpression IntString (Commented TypeExpress
 data ParameterDeclaration = ParameterDeclaration String (Commented TypeExpression) Bool
                           deriving (Eq, Show)
 data VariableDeclaration  = VariableDeclaration String (Commented TypeExpression)
+                          | VariableDeclarationComment Comment
                           deriving (Eq, Show)
 data Statement            = AssignStatement (Commented Variable) (Commented Expression)
                           | CallStatement String [Commented Expression]
