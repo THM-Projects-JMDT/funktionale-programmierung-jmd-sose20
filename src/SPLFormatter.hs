@@ -143,16 +143,16 @@ fGlobalDeclaration conf@(Config it n _ _ _) c (TypeDeclaration s t, css)        
 fGlobalDeclaration conf@(Config it n _ _ nls) c (ProcedureDeclaration i p v s, css) = let c1 = c + 1 in
                                                                                       indent it n c
                                                                                    ++ "proc "
-                                                                                   ++ fComments conf c1 (head css)
+                                                                                   ++ fComments conf c (head css)
                                                                                    ++ i
                                                                                    ++ noSpaceIfEmpty (css !! 1)
-                                                                                   ++ fComments conf c1 (css !! 1)
+                                                                                   ++ fComments conf c (css !! 1)
                                                                                    ++ "("
                                                                                    ++ noSpaceIfEmpty (css !! 2)
-                                                                                   ++ fComments conf c1 (css !! 2)
+                                                                                   ++ fComments conf c (css !! 2)
                                                                                    ++ fParameterDeclarations conf c1 p
                                                                                    ++ ") "
-                                                                                   ++ fComments conf c1 (css !! 3)
+                                                                                   ++ fComments conf c (css !! 3)
                                                                                    ++ "{"
                                                                                    ++ newline_ nls
                                                                                    ++ noSpaceIfEmpty (css !! 4)
