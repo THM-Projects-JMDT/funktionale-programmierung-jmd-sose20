@@ -162,6 +162,7 @@ pProgram = do
              <|> pGlobalComment 
              <|> pTypeDeclaration 
              <|> pProcedureDeclaration
+  spacesN >> eof
   return (Program glob)
 
 
