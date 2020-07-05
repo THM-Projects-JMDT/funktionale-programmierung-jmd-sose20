@@ -120,6 +120,11 @@ fComment_ conf c cm = " " ++ fComment conf c cm
 -- |return a Pretty Printed Comment or a new line
 fOptionalComment :: PrettyPrinter [Comment]
 fOptionalComment conf@(Config _ _ _ _ nls) c cs = if null cs 
+                                                    then " "
+                                                    else fComment_ conf c (head cs)
+
+fOptionalComment_ :: PrettyPrinter [Comment]
+fOptionalComment_ conf@(Config _ _ _ _ nls) c cs = if null cs 
                                                     then newline_ nls 
                                                     else fComment_ conf c (head cs)
 
@@ -158,7 +163,7 @@ fGlobalDeclaration conf@(Config it n _ _ _) c (TypeDeclaration s t, css)        
                                                                                     ++ fComments conf c (css !! 2)
                                                                                     ++ fTypeExpression conf c t
                                                                                     ++ ";"
-                                                                                    ++ fOptionalComment conf c (css !! 3)
+                                                                                    ++ fOptionalComment_ conf c (css !! 3)
 fGlobalDeclaration conf@(Config it n _ _ nls) c (ProcedureDeclaration i p v s, css) = let c1 = c + 1 in
                                                                                       indent it n c
                                                                                    ++ "proc "
@@ -181,7 +186,7 @@ fGlobalDeclaration conf@(Config it n _ _ nls) c (ProcedureDeclaration i p v s, c
                                                                                    ++ indent it n c
                                                                                    ++ "}"
                                                                                    ++ noSpaceIfEmpty (css !! 5)
-                                                                                   ++ fOptionalComment conf c (css !! 5)
+                                                                                   ++ fOptionalComment_ conf c (css !! 5)
 fGlobalDeclaration conf@(Config _ _ _ _ nls) _ (GlobalEmptyLine, _)               = newline_ nls
 fGlobalDeclaration conf c (GlobalComment s, _)                                    = fLineComment conf c s   
 
@@ -237,7 +242,7 @@ fVariableDeclaration conf@(Config it n _ _ _) c (VariableDeclaration s t, css) =
                                                                                  ++ fComments conf c (css !! 2)
                                                                                  ++ fTypeExpression conf c t 
                                                                                  ++ ";"
-                                                                                 ++ fOptionalComment conf c (css !! 3)
+                                                                                 ++ fOptionalComment_ conf c (css !! 3)
 fVariableDeclaration conf c (VariableDeclarationComment cs, _) = fLineComment conf c cs                                                                              
                                                                              
 -- Statements -------------------------------------------------
@@ -246,6 +251,15 @@ fStatement_ conf c s@(StatementEmptyLine, _)                      = fStatement c
 fStatement_ conf@(Config it n _ _ _) c s                          = indent it n c 
                                                                     ++ fStatement conf c s 
 
+fStatement' :: PrettyPrinter (Commented Statement)
+fStatement' conf@(Config it n _ _ _) c (CompoundStatement sts, css) = "{"
+                                                ++ fOptionalComment_ conf c (head css)
+                                                ++ concatMap (\s -> fStatement_ conf (c + 1) s) sts
+                                                ++ indent it n c
+                                                ++ "}"
+                                                ++ fOptionalComment conf c (css !! 1)
+fStatement' conf c s = fStatement conf c s
+
 fStatement :: PrettyPrinter (Commented Statement)  
 fStatement conf@(Config it n _ _ _) c (AssignStatement v e, css)  = fVariable conf c v
                                                                     ++ spaceIfEmpty (last $ peekComments v)
@@ -253,7 +267,7 @@ fStatement conf@(Config it n _ _ _) c (AssignStatement v e, css)  = fVariable co
                                                                     ++ fComments conf c (head css)
                                                                     ++ fExpression conf c e
                                                                     ++ ";"
-                                                                    ++ fOptionalComment conf c (css !! 1)
+                                                                    ++ fOptionalComment_ conf c (css !! 1)
 
 fStatement conf@(Config it n _ _ nls) c (CallStatement s es, css)  = s 
                                                                     ++ noSpaceIfEmpty (head css)
@@ -266,17 +280,30 @@ fStatement conf@(Config it n _ _ nls) c (CallStatement s es, css)  = s
                                                                     ++ noSpaceIfEmpty (css !! 2)
                                                                     ++ fComments conf c (css !! 2)
                                                                     ++ ";"
-                                                                    ++ fOptionalComment conf  c (css !! 3)
+                                                                    ++ fOptionalComment_ conf  c (css !! 3)
 
 fStatement conf@(Config it n _ _ nls) c (CompoundStatement sts, css) = "{"
-                                                                    ++ fOptionalComment conf c (head css)
+                                                                    ++ fOptionalComment_ conf c (head css)
                                                                     ++ concatMap (\s -> fStatement_ conf (c + 1) s) sts
                                                                     ++ indent it n c
                                                                     ++ "}"
-                                                                    ++ fOptionalComment conf c (css !! 1)
+                                                                    ++ fOptionalComment_ conf c (css !! 1)
 
 fStatement conf@(Config it n _ _ _) c (EmptyStatement, css)        = ";"
-                                                                     ++ fOptionalComment conf c (head css)                                                    
+                                                                     ++ fOptionalComment_ conf c (head css)
+
+fStatement conf@(Config it n _ _ nls) c (IfStatement e s@(CompoundStatement _, _) s'@(Just _), css) 
+                                                                   = "if "
+                                                                  ++ fComments conf c (head css)
+                                                                  ++ "("
+                                                                  ++ noSpaceIfEmpty (css !! 1)
+                                                                  ++ fComments conf c (css !! 1)
+                                                                  ++ fExpression conf c e
+                                                                  ++ ") "
+                                                                  ++ fComments conf c (css !! 2) 
+                                                                  ++ fStatement' conf c s
+                                                                  ++ ifEmptyElse (last $ peekComments s) "" (indent it n c)
+                                                                  ++ fElse conf c (s', css !! 3)                                                                                                                 
 
 -- TODO if: Fix else Position? (may depend on the setting leftCurlNextLine)
 fStatement conf@(Config it n _ _ nls) c (IfStatement e s ms, css)  = "if "                                                    
@@ -305,12 +332,10 @@ fStatement conf@(Config _ _ _ _ nls) _ (StatementEmptyLine, _)      = newline_ n
 
 fElse :: PrettyPrinter (Maybe (Commented Statement), [Comment])
 fElse conf c (Nothing, _) = ""
-fElse conf@(Config it n _ _ _)  c (Just stmd, css) = indent it n c
-                                                  ++ "else "
+fElse conf@(Config it n _ _ _)  c (Just stmd, css) = "else "
                                                   ++ fComments conf c css
                                                   ++ fStatement conf c stmd
 
-                                        
 
 -- Variables --------------------------------------------------
 
