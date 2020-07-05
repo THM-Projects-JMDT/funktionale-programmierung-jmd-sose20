@@ -8,7 +8,7 @@ import SPLParser
 
 {-
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Tests for the formatter
+Tests for the parser
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 -}
 
@@ -114,14 +114,14 @@ testComments = testCase "" $
 
 testTypeDeclaration = testCase "" $ 
   let input    = "type vector = array[3] of int;"
-      expected = Right $ TypeDeclaration "vector" (ArrayTypeExpression "3" (NamedTypeExpression "int")) []
+      expected = Right $ (TypeDeclaration "vector" (ArrayTypeExpression "3" (NamedTypeExpression "int", [[]]), [[], [], [], [], []]), [[], [], [], []])
       actual   = run pTypeDeclaration input
   in 
     assertEqual "" expected actual 
 
 testTypeDeclarationWithComments = testCase "" $
   let input = "type //A\n\n vector  //B\n = //C\n array //D\n[//E\n3//F\n]//G\n of //H\nint //I\n; //J\n//K\n" 
-      expected = Right $ TypeDeclaration "vector" (ArrayTypeExpression "3" (NamedTypeExpression "int")) ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]
+      expected = Right $ (TypeDeclaration "vector" (ArrayTypeExpression "3" (NamedTypeExpression "int", [["I"]]), [["D"], ["E"], ["F"], ["G"], ["H"]]), [["A"], ["B"], ["C"], ["J"]])
       actual   = run pTypeDeclaration input
   in 
     assertEqual "" expected actual

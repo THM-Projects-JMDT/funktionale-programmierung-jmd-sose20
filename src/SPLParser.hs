@@ -136,7 +136,8 @@ pCommentOptional :: Parser [Comment]
 pCommentOptional = do 
   la <- lookAhead $ optionMaybe anyChar
   cm <- case la of 
-             Just '\n' -> newline >> spacesL >> return Nothing
+             Just '\n' -> endOfLine >> spacesL >> return Nothing
+             Just '\r' -> endOfLine >> spacesL >> return Nothing
              Just '/'  -> Just <$> pComment
              otherwise -> return Nothing
   let cs = case cm of 
@@ -170,7 +171,7 @@ pProgram = do
 
 -- |The Parser saves empty lines separating global declarations in the AST, this function fullfills this purpose.
 pGlobalEmptyLine :: Parser (Commented GlobalDeclaration)
-pGlobalEmptyLine = newline >> spacesL >> return (GlobalEmptyLine, [])
+pGlobalEmptyLine = endOfLine >> spacesL >> return (GlobalEmptyLine, [])
 
 
 -- Global Comment
@@ -303,7 +304,7 @@ pParameterDeclaration = do
 -- Variable Declaration ------------------
 
 pVariableDeclaration :: Parser (Commented VariableDeclaration)
-pVariableDeclaration = pVariableDeclaration_ <|> pVariableDeclarationComment
+pVariableDeclaration = try pVariableDeclaration_ <|> pVariableDeclarationComment
 
 pVariableDeclaration_ :: Parser (Commented VariableDeclaration)
 pVariableDeclaration_ = do
@@ -378,7 +379,7 @@ pStatementComment = do
   return (StatementComment c, [])
 
 pStatementEmptyLine :: Parser (Commented Statement)
-pStatementEmptyLine = newline >> spacesL >> return (StatementEmptyLine, [])
+pStatementEmptyLine = endOfLine >> spacesL >> return (StatementEmptyLine, [])
 
 pIfStatement :: Parser (Commented Statement)
 pIfStatement = do
