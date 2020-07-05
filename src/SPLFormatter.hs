@@ -1,15 +1,14 @@
-{-|
-Module      : SPLFormatter
-Description : Pretty Printer for the SPL-AST.
-
-This module provides functions which converts a SPL-AST structure into a Pretty Printed String.
--}
-
 module SPLFormatter where
 
 import SPLAbsyn
 import Text.Parsec
 import SPLParser
+
+{-
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Pretty Printer for the SPL-AST
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-}
 
 
 -- configuration for the pretty printer
@@ -40,20 +39,17 @@ type IndentationLevel = Int
 -- utility ---------------------------------------------------
 --------------------------------------------------------------
 
--- |return Tabs on Spaces based on the config and the Identation Level
 indent :: IndentationType -> IndentationLevel -> Int -> String 
 indent it n c = replicate (n * c) $ case it of 
                                       Space -> ' '
                                       Tab   -> '\t'
 
--- |returns a new line based on the setting in the config
 newline_ :: NewLineStyle -> String 
 newline_ nls = case nls of
                  Linux      -> "\n"
                  Windows    -> "\r\n"
                  ClassicMac -> "\r"
 
--- |converts a Oprator into a printable Symbol
 showOp :: Op -> String
 showOp Lt    = "<" 
 showOp Ne    = "#"
@@ -66,25 +62,20 @@ showOp Minus = "-"
 showOp Ge    = ">="
 showOp Eq    = "=" 
 
--- |If the passes list is empty then do a, otherwise b
 ifEmptyElse :: [a] -> b -> b -> b 
 ifEmptyElse xs a b = if null xs then a else b
 
--- |If the passed list is empty then return a space, otherwise return nothing
 spaceIfEmpty :: [a] -> String
 spaceIfEmpty xs = ifEmptyElse xs " " ""
 
--- |If the passed list is empty, then return nothing, otherwise return a space
 noSpaceIfEmpty :: [a] -> String
 noSpaceIfEmpty xs = ifEmptyElse xs "" " "
 
--- |If the passed list is empty, then return a new line
 newLineIfEmpty :: [a] -> NewLineStyle -> String
 newLineIfEmpty xs nls = ifEmptyElse xs (newline_ nls) ""
 
--- |unpacks the Comments out of a passed Tuple
-peekComments :: Commented a -> [[Comment]]
-peekComments (_, css) = css
+peekLastComment :: Commented a -> [Comment]
+peekLastComment (_, css) = last css
                             
 -- for testing -----------------------------------------------
 --------------------------------------------------------------
@@ -105,19 +96,15 @@ testFormat s p f = putStrLn $ case run p s of
 
 -- Comments --------------------------------------------------
 
--- |returns a shifted Pretty Printed Comment 
 fLineComment :: PrettyPrinter Comment
 fLineComment conf@(Config it n _ _ _) c cm = indent it n c ++ fComment conf c cm
 
--- |returns a Pretty Printed Comment
 fComment :: PrettyPrinter Comment
 fComment (Config _ _ _ _ nls) _ c = "//" ++ c ++ newline_ nls
 
--- |returns a Pretty Printed Comment with 1 additional Space
 fComment_ :: PrettyPrinter Comment 
 fComment_ conf c cm = " " ++ fComment conf c cm
 
--- |return a Pretty Printed Comment or a new line
 fOptionalComment :: PrettyPrinter [Comment]
 fOptionalComment conf@(Config _ _ _ _ nls) c cs = if null cs 
                                                     then " "
@@ -128,7 +115,6 @@ fOptionalComment_ conf@(Config _ _ _ _ nls) c cs = if null cs
                                                     then newline_ nls 
                                                     else fComment_ conf c (head cs)
 
--- |returns a list of passed comments or a space based on the boolean
 fComments' :: Bool -> PrettyPrinter [Comment]
 fComments' _ _ _ []                              = ""
 fComments' _ (Config _ _ _ False _) _ _          = ""
@@ -136,17 +122,15 @@ fComments' s conf@(Config it n _ _ _) c (cm:cms) = if s then " " else ""
                                                    ++ fComment conf c cm 
                                                    ++ concatMap (fLineComment conf c) cms
                                                    ++ indent it n c
--- |calls fComments' with the bool value false
+
 fComments :: PrettyPrinter [Comment]
 fComments conf c cms = fComments' False conf c cms
 
--- |calls fComments' with the bool value true
 fComments_ :: PrettyPrinter [Comment]
 fComments_ conf c cms = fComments' True conf c cms
 
 -- Programm ---------------------------------------------------
 
--- |runs through the whole AST Structure and returns a Pretty Printed String
 fProgram :: PrettyPrinter Program
 fProgram conf@(Config it n _ _ _) c (Program gl) = concatMap (fGlobalDeclaration conf c) gl
 
@@ -251,25 +235,16 @@ fStatement_ conf c s@(StatementEmptyLine, _)                      = fStatement c
 fStatement_ conf@(Config it n _ _ _) c s                          = indent it n c 
                                                                     ++ fStatement conf c s 
 
-fStatement' :: PrettyPrinter (Commented Statement)
-fStatement' conf@(Config it n _ _ _) c (CompoundStatement sts, css) = "{"
-                                                ++ fOptionalComment_ conf c (head css)
-                                                ++ concatMap (\s -> fStatement_ conf (c + 1) s) sts
-                                                ++ indent it n c
-                                                ++ "}"
-                                                ++ fOptionalComment conf c (css !! 1)
-fStatement' conf c s = fStatement conf c s
-
 fStatement :: PrettyPrinter (Commented Statement)  
-fStatement conf@(Config it n _ _ _) c (AssignStatement v e, css)  = fVariable conf c v
-                                                                    ++ spaceIfEmpty (last $ peekComments v)
+fStatement conf@(Config it n _ _ _) c (AssignStatement v e, css)    = fVariable conf c v
+                                                                    ++ spaceIfEmpty (peekLastComment v)
                                                                     ++ ":= "
                                                                     ++ fComments conf c (head css)
                                                                     ++ fExpression conf c e
                                                                     ++ ";"
                                                                     ++ fOptionalComment_ conf c (css !! 1)
 
-fStatement conf@(Config it n _ _ nls) c (CallStatement s es, css)  = s 
+fStatement conf@(Config it n _ _ nls) c (CallStatement s es, css)   = s 
                                                                     ++ noSpaceIfEmpty (head css)
                                                                     ++ fComments conf c (head css)
                                                                     ++ "("
@@ -282,59 +257,61 @@ fStatement conf@(Config it n _ _ nls) c (CallStatement s es, css)  = s
                                                                     ++ ";"
                                                                     ++ fOptionalComment_ conf  c (css !! 3)
 
-fStatement conf@(Config it n _ _ nls) c (CompoundStatement sts, css) = "{"
-                                                                    ++ fOptionalComment_ conf c (head css)
-                                                                    ++ concatMap (\s -> fStatement_ conf (c + 1) s) sts
-                                                                    ++ indent it n c
-                                                                    ++ "}"
-                                                                    ++ fOptionalComment_ conf c (css !! 1)
+fStatement conf c s@(CompoundStatement _, _)                         = fCurlyStatement True conf c s 
 
-fStatement conf@(Config it n _ _ _) c (EmptyStatement, css)        = ";"
-                                                                     ++ fOptionalComment_ conf c (head css)
+fStatement conf@(Config it n _ _ _) c (EmptyStatement, css)          = ";"
+                                                                    ++ fOptionalComment_ conf c (head css)
 
 fStatement conf@(Config it n _ _ nls) c (IfStatement e s@(CompoundStatement _, _) s'@(Just _), css) 
-                                                                   = "if "
-                                                                  ++ fComments conf c (head css)
-                                                                  ++ "("
-                                                                  ++ noSpaceIfEmpty (css !! 1)
-                                                                  ++ fComments conf c (css !! 1)
-                                                                  ++ fExpression conf c e
-                                                                  ++ ") "
-                                                                  ++ fComments conf c (css !! 2) 
-                                                                  ++ fStatement' conf c s
-                                                                  ++ ifEmptyElse (last $ peekComments s) "" (indent it n c)
-                                                                  ++ fElse conf c (s', css !! 3)                                                                                                                 
+                                                                     = fConditionHead "while" conf c (e, take 3 css)
+                                                                    ++ fCurlyStatement False conf c s
+                                                                    ++ ifEmptyElse (peekLastComment s) "" (indent it n c)
+                                                                    ++ fElse conf c (s', css !! 3)                                                                                                                 
 
--- TODO if: Fix else Position? (may depend on the setting leftCurlNextLine)
-fStatement conf@(Config it n _ _ nls) c (IfStatement e s ms, css)  = "if "                                                    
-                                                                  ++ fComments conf c (head css)
-                                                                  ++ "("
-                                                                  ++ noSpaceIfEmpty (css !! 1)
-                                                                  ++ fComments conf c (css !! 1)
-                                                                  ++ fExpression conf c e
-                                                                  ++ ") "
-                                                                  ++ fComments conf c (css !! 2)  
-                                                                  ++ fStatement conf c s
-                                                                  ++ fElse conf c (ms, css !! 3)                                                                 
-fStatement conf@(Config it n _ _ nls) c (WhileStatement e s, css)  = "while "
-                                                                     ++ fComments conf c (head css)
-                                                                     ++ "("
-                                                                     ++ noSpaceIfEmpty (css !! 1)
-                                                                     ++ fComments conf c (css !! 1)
-                                                                     ++ fExpression conf c e
-                                                                     ++ ") "
-                                                                     ++ fComments conf c (css !! 2)  
-                                                                     ++ fStatement conf c s                                                            
+fStatement conf@(Config it n _ _ nls) c (IfStatement e s ms, css)    = fConditionHead "if" conf c (e, take 3 css) 
+                                                                    ++ fStatement conf c s
+                                                                    ++ _fElse conf c (ms, css !! 3)   
 
-fStatement conf c (StatementComment s, _)                           = fComment conf c s    
+fStatement conf@(Config it n _ _ nls) c (WhileStatement e s, css)    = fConditionHead "while" conf c (e, take 3 css)
+                                                                    ++ fStatement conf c s                                                            
 
-fStatement conf@(Config _ _ _ _ nls) _ (StatementEmptyLine, _)      = newline_ nls
+fStatement conf c (StatementComment s, _)                            = fComment conf c s    
+
+fStatement conf@(Config _ _ _ _ nls) _ (StatementEmptyLine, _)       = newline_ nls
+
+_fElse :: PrettyPrinter (Maybe (Commented Statement), [Comment])
+_fElse conf c (Nothing, _) = ""
+_fElse conf@(Config it n _ _ _) c s               = indent it n c 
+                                                  ++ fElse conf c s
 
 fElse :: PrettyPrinter (Maybe (Commented Statement), [Comment])
 fElse conf c (Nothing, _) = ""
-fElse conf@(Config it n _ _ _)  c (Just stmd, css) = "else "
-                                                  ++ fComments conf c css
+fElse conf@(Config it n _ _ _)  c (Just stmd, cs) = "else "
+                                                  ++ fComments conf c cs
                                                   ++ fStatement conf c stmd
+
+fConditionHead :: String -> PrettyPrinter (Commented Expression, [[Comment]])
+fConditionHead s conf@(Config it n _ _ _) c (e, css) = s
+                                                       ++ " "
+                                                       ++ fComments conf c (head css)
+                                                       ++ "("
+                                                       ++ noSpaceIfEmpty (css !! 1)
+                                                       ++ fComments conf c (css !! 1)
+                                                       ++ fExpression conf c e
+                                                       ++ ") "
+                                                       ++ fComments conf c (css !! 2)  
+
+fCurlyStatement :: Bool -> PrettyPrinter (Commented Statement)
+fCurlyStatement b conf@(Config it n _ _ _) c (CompoundStatement sts, css) = 
+                                                        "{"
+                                                        ++ fOptionalComment_ conf c (head css)
+                                                        ++ concatMap (\s -> fStatement_ conf (c + 1) s) sts
+                                                        ++ indent it n c
+                                                        ++ "}"
+                                                        ++ let css1 = (css !! 1) in if b 
+                                                            then fOptionalComment_ conf c css1 
+                                                            else fOptionalComment conf c css1
+fCurlyStatement _ _ _ _ = "{}"
 
 
 -- Variables --------------------------------------------------
@@ -370,7 +347,7 @@ fExpression conf c (Parenthesized expr, css)            =  "("
                                                           ++ noSpaceIfEmpty (css !! 1)
                                                           ++ fComments conf c (css !! 1)       
 fExpression conf c (BinaryExpression op expr1 expr2, _) = fExpression conf c expr1
-                                                          ++ spaceIfEmpty (last $ peekComments expr1)
+                                                          ++ spaceIfEmpty (peekLastComment expr1)
                                                           ++ fOperator conf c op
                                                           ++ fExpression conf c expr2
 fExpression conf c (Negative expr, css)                 = showOp Minus
