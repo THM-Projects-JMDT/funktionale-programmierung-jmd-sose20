@@ -263,7 +263,7 @@ fStatement conf@(Config it n _ _ _) c (EmptyStatement, css)          = ";"
                                                                     ++ fOptionalComment_ conf c (head css)
 
 fStatement conf@(Config it n _ _ nls) c (IfStatement e s@(CompoundStatement _, _) s'@(Just _), css) 
-                                                                     = fConditionHead "while" conf c (e, take 3 css)
+                                                                     = fConditionHead "if" conf c (e, take 3 css)
                                                                     ++ fCurlyStatement False conf c s
                                                                     ++ ifEmptyElse (peekLastComment s) "" (indent it n c)
                                                                     ++ fElse conf c (s', css !! 3)                                                                                                                 
