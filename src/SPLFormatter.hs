@@ -336,7 +336,7 @@ fBracketExpression conf c (expr, css) = "["
 
 fExpression :: PrettyPrinter (Commented Expression) 
 fExpression conf c (VariableExpression v, _)            = fVariable conf c v
-fExpression conf c (IntLiteral i, css)                  = i
+fExpression conf c (IntLiteral i, css)                  = if i == "'\n'" then "'\\n'" else i
                                                           ++ noSpaceIfEmpty (head css)
                                                           ++ fComments conf c (head css)
 fExpression conf c (Parenthesized expr, css)            =  "("
