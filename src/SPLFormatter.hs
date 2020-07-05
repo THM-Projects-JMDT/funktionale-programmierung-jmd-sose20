@@ -1,14 +1,15 @@
+{-|
+Module      : SPLFormatter
+Description : Pretty Printer for the SPL-AST.
+
+This module provides functions which converts a SPL-AST structure into a Pretty Printed String.
+-}
+
 module SPLFormatter where
 
 import SPLAbsyn
 import Text.Parsec
 import SPLParser
-
-{-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Pretty Printer for the SPL-AST
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
--}
 
 
 -- configuration for the pretty printer
@@ -39,17 +40,20 @@ type IndentationLevel = Int
 -- utility ---------------------------------------------------
 --------------------------------------------------------------
 
+-- |return Tabs on Spaces based on the config and the Identation Level
 indent :: IndentationType -> IndentationLevel -> Int -> String 
 indent it n c = replicate (n * c) $ case it of 
                                       Space -> ' '
                                       Tab   -> '\t'
 
+-- |returns a new line based on the setting in the config
 newline_ :: NewLineStyle -> String 
 newline_ nls = case nls of
                  Linux      -> "\n"
                  Windows    -> "\r\n"
                  ClassicMac -> "\r"
 
+-- |converts a Oprator into a printable Symbol
 showOp :: Op -> String
 showOp Lt    = "<" 
 showOp Ne    = "#"
@@ -62,18 +66,23 @@ showOp Minus = "-"
 showOp Ge    = ">="
 showOp Eq    = "=" 
 
+-- |If the passes list is empty then do a, otherwise b
 ifEmptyElse :: [a] -> b -> b -> b 
 ifEmptyElse xs a b = if null xs then a else b
 
+-- |If the passed list is empty then return a space, otherwise return nothing
 spaceIfEmpty :: [a] -> String
 spaceIfEmpty xs = ifEmptyElse xs " " ""
 
+-- |If the passed list is empty, then return nothing, otherwise return a space
 noSpaceIfEmpty :: [a] -> String
 noSpaceIfEmpty xs = ifEmptyElse xs "" " "
 
+-- |If the passed list is empty, then return a new line
 newLineIfEmpty :: [a] -> NewLineStyle -> String
 newLineIfEmpty xs nls = ifEmptyElse xs (newline_ nls) ""
 
+-- |unpacks the Comments out of a passed Tuple
 peekComments :: Commented a -> [[Comment]]
 peekComments (_, css) = css
                             
@@ -96,20 +105,25 @@ testFormat s p f = putStrLn $ case run p s of
 
 -- Comments --------------------------------------------------
 
+-- |returns a shifted Pretty Printed Comment 
 fLineComment :: PrettyPrinter Comment
 fLineComment conf@(Config it n _ _ _) c cm = indent it n c ++ fComment conf c cm
 
+-- |returns a Pretty Printed Comment
 fComment :: PrettyPrinter Comment
 fComment (Config _ _ _ _ nls) _ c = "//" ++ c ++ newline_ nls
 
+-- |returns a Pretty Printed Comment with 1 additional Space
 fComment_ :: PrettyPrinter Comment 
 fComment_ conf c cm = " " ++ fComment conf c cm
 
+-- |return a Pretty Printed Comment or a new line
 fOptionalComment :: PrettyPrinter [Comment]
 fOptionalComment conf@(Config _ _ _ _ nls) c cs = if null cs 
                                                     then newline_ nls 
                                                     else fComment_ conf c (head cs)
 
+-- |returns a list of passed comments or a space based on the boolean
 fComments' :: Bool -> PrettyPrinter [Comment]
 fComments' _ _ _ []                              = ""
 fComments' _ (Config _ _ _ False _) _ _          = ""
@@ -117,15 +131,17 @@ fComments' s conf@(Config it n _ _ _) c (cm:cms) = if s then " " else ""
                                                    ++ fComment conf c cm 
                                                    ++ concatMap (fLineComment conf c) cms
                                                    ++ indent it n c
-
+-- |calls fComments' with the bool value false
 fComments :: PrettyPrinter [Comment]
 fComments conf c cms = fComments' False conf c cms
 
+-- |calls fComments' with the bool value true
 fComments_ :: PrettyPrinter [Comment]
 fComments_ conf c cms = fComments' True conf c cms
 
 -- Programm ---------------------------------------------------
 
+-- |runs through the whole AST Structure and returns a Pretty Printed String
 fProgram :: PrettyPrinter Program
 fProgram conf@(Config it n _ _ _) c (Program gl) = concatMap (fGlobalDeclaration conf c) gl
 

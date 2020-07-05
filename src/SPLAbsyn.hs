@@ -1,11 +1,11 @@
-module SPLAbsyn where
+{-|
+Module      : SPLAbsyn
+Description : SPL-AST structure.
 
-{-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-SPL-AST structure - extended with comments
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This module provides the SPL-AST structure, extended with comments.
 -}
 
+module SPLAbsyn where
 
 data Program              = Program [Commented GlobalDeclaration]
                           deriving (Eq, Show)
