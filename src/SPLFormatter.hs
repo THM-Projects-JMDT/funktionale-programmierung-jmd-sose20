@@ -62,6 +62,10 @@ showOp Minus = "-"
 showOp Ge    = ">="
 showOp Eq    = "=" 
 
+showIntLiteral :: String -> String
+showIntLiteral "'\n'" = "'\\n'"
+showIntLiteral s = s
+
 ifEmptyElse :: [a] -> b -> b -> b 
 ifEmptyElse xs a b = if null xs then a else b
 
@@ -186,7 +190,7 @@ fTypeExpression conf@(Config it n _ _ _) c (ArrayTypeExpression s t, css) = "arr
                                                                             ++ "["
                                                                             ++ noSpaceIfEmpty (css !! 1)
                                                                             ++ fComments conf c (css !! 1)
-                                                                            ++ s 
+                                                                            ++ showIntLiteral s 
                                                                             ++ noSpaceIfEmpty (css !! 2)
                                                                             ++ fComments conf c (css !! 2)
                                                                             ++ "] "
@@ -336,7 +340,7 @@ fBracketExpression conf c (expr, css) = "["
 
 fExpression :: PrettyPrinter (Commented Expression) 
 fExpression conf c (VariableExpression v, _)            = fVariable conf c v
-fExpression conf c (IntLiteral i, css)                  = if i == "'\n'" then "'\\n'" else i
+fExpression conf c (IntLiteral i, css)                  = showIntLiteral i
                                                           ++ noSpaceIfEmpty (head css)
                                                           ++ fComments conf c (head css)
 fExpression conf c (Parenthesized expr, css)            =  "("
