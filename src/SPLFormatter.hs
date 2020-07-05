@@ -83,8 +83,8 @@ peekLastComment (_, css) = last css
 run2 :: Parser a -> String -> Either ParseError a
 run2 p = runParser p () ""
 
-testFormat :: String -> Parser a -> PrettyPrinter a -> IO ()
-testFormat s p f = putStrLn $ case run2 p s of 
+testFormat2 :: String -> Parser a -> PrettyPrinter a -> IO ()
+testFormat2 s p f = putStrLn $ case run2 p s of 
                                 Left err  -> "Parser failed: " ++ show err
                                 Right r -> f defaultConfig 2 r
 
