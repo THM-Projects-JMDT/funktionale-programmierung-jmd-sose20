@@ -48,9 +48,10 @@ testIntLitHex = testCase "" $
     assertEqual "" expected actual
 
 testIntLitHexInvalid = testCase "" $
-  let res = run pIntLit "0xg"
+  let expected = Right "0"
+      actual = run pIntLit "0xg"
   in 
-    assertBool "'g' is not a valid hex digit" (isError res)
+    assertEqual "" expected actual
 
 testIntLitChar = testCase "" $
   let expected = Right "'\n'"
