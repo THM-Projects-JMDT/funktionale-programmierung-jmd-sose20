@@ -391,7 +391,7 @@ pIfStatement = do
   pRParen >> spacesN
   cs3 <- pComments
   stmt <- pStatement
-  optElse <- try (optionMaybe $ spacesN >> pComments >> pElseStatement)
+  optElse <- optionMaybe $ try (spacesN >> pComments >> pElseStatement)
   let (optstmt, cs4) = case optElse of 
                   Nothing    -> (Nothing, [])
                   Just (stmt2, cs) -> (Just stmt2, cs)
