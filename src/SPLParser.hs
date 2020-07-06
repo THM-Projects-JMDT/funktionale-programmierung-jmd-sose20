@@ -118,12 +118,12 @@ pIdent = do
   return (x : xs)
 
 
--- ** Comment Parsers 
+-- ** Comments
 -----------------------------------------------
 
--- |The parser saves comments in the AST, so they are available at the pretty printing step.
+-- |Parses a single comment and following spaces in the next line.
 --
--- Parses a single comment and following spaces in the next line.
+-- The parser saves comments in the AST, so they are available at the pretty printing step.
 pComment :: Parser Comment 
 pComment = try $ do 
   string "//"
@@ -145,13 +145,13 @@ pCommentOptional = do
              Just c  -> [c]
   return cs
 
--- |Parses a sequence of comments with optional spaces inbetween and following spaces 
+-- |Parses a sequence of comments with optional spaces inbetween and following spaces.
 pComments :: Parser [Comment]
 pComments = many $ pComment << spacesN
 
 
 
--- ** AST node Parsers
+-- ** AST nodes
 -----------------------------------------------
 
 -- Program -------------------------------
@@ -323,6 +323,7 @@ pVariableDeclarationComment :: Parser (Commented VariableDeclaration)
 pVariableDeclarationComment = do 
   c <- pComment
   return (VariableDeclarationComment c, [])
+
 
 -- Statements ----------------------------
 
@@ -498,7 +499,7 @@ pos (e, css) = (Positive (e, tail css), [head css])
 
 
 ---------------------------------------------------------
--- *  Utility functions
+-- * Utility functions
 ---------------------------------------------------------
 
 -- |Consumes a sequence of any spaces except for newlines.
@@ -509,7 +510,7 @@ spacesL = many (char ' ' <|> char '\t') >> return ()
 spacesN :: Parser () 
 spacesN = spaces
 
--- |Execute two monadic actions and ignore the result of the second one
+-- |Execute two monadic actions and ignore the result of the second one.
 (<<) :: Monad m => m a -> m b -> m a
 f << g = do 
   x <- f 

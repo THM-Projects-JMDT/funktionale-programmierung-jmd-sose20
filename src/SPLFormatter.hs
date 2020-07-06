@@ -2,7 +2,7 @@
 Module      : SPLFormatter
 Description : Pretty Printer for the SPL-AST.
 
-This module provides functions which converts a SPL-AST structure into a Pretty Printed String.
+This module provides functions for converting an SPL-AST structure into a pretty printed string.
 -}
 
 module SPLFormatter where
@@ -12,7 +12,7 @@ import Text.Parsec
 import SPLParser
 
 
--- configuration for the pretty printer
+-- |This type encapsulates the different configuration options for the pretty printing functions.
 data Config = Config {
     indentType :: IndentationType,
     indentNum :: Int,
@@ -21,78 +21,31 @@ data Config = Config {
     newLineType :: NewLineStyle
 } deriving (Eq, Show)
 
-defaultConfig = Config Space 2 False True Linux
-
+-- |An indentation can be a sequence of spaces or a sequence of tabs - this type encapsulates these two options.
 data IndentationType = Space 
                      | Tab 
                      deriving (Eq, Show)
 
+-- |Different operating systems use different new line characters ('\n', '\r\n', '\r') - this type encapsulates the different options.
 data NewLineStyle = Linux
                   | Windows
                   | ClassicMac
                   deriving (Eq, Show)
 
+-- |Base type alias for the pretty printing functions.
+--
+-- A PrettyPrinter takes as arguments a Config and an IndentationLevel and returns a pretty printed string. 
 type PrettyPrinter a = Config -> IndentationLevel -> a -> String
 
+-- |The indentation level determines the number of leading spaces/tabs of a pretty printed string.
 type IndentationLevel = Int
 
-
--- utility ---------------------------------------------------
---------------------------------------------------------------
-
--- |return Tabs on Spaces based on the config and the Identation Level
-indent :: IndentationType -> IndentationLevel -> Int -> String 
-indent it n c = replicate (n * c) $ case it of 
-                                      Space -> ' '
-                                      Tab   -> '\t'
-
--- |returns a new line based on the setting in the config
-newline_ :: NewLineStyle -> String 
-newline_ nls = case nls of
-                 Linux      -> "\n"
-                 Windows    -> "\r\n"
-                 ClassicMac -> "\r"
-
--- |converts a Oprator into a printable Symbol
-showOp :: Op -> String
-showOp Lt    = "<" 
-showOp Ne    = "#"
-showOp Plus  = "+"
-showOp Slash = "/"
-showOp Star  = "*"
-showOp Gt    = ">"
-showOp Le    = "<="
-showOp Minus = "-"
-showOp Ge    = ">="
-showOp Eq    = "=" 
-
--- |Show a IntLiteral corectly, also \n
-showIntLiteral :: String -> String
-showIntLiteral "'\n'" = "'\\n'"
-showIntLiteral s = s
-
--- |If the passes list is empty then do a, otherwise b
-ifEmptyElse :: [a] -> b -> b -> b 
-ifEmptyElse xs a b = if null xs then a else b
-
--- |If the passed list is empty then return a space, otherwise return nothing
-spaceIfEmpty :: [a] -> String
-spaceIfEmpty xs = ifEmptyElse xs " " ""
-
--- |If the passed list is empty, then return nothing, otherwise return a space
-noSpaceIfEmpty :: [a] -> String
-noSpaceIfEmpty xs = ifEmptyElse xs "" " "
-
--- |If the passed list is empty, then return a new line
-newLineIfEmpty :: [a] -> NewLineStyle -> String
-newLineIfEmpty xs nls = ifEmptyElse xs (newline_ nls) ""
-
--- |unpacks the Comments out of a passed Tuple
-peekLastComment :: Commented a -> [Comment]
-peekLastComment (_, css) = last css
                             
+
 -- for testing -----------------------------------------------
 --------------------------------------------------------------
+
+defaultConfig = Config Space 2 False True Linux
 
 run2 :: Parser a -> String -> Either ParseError a
 run2 p = runParser p () ""
@@ -104,37 +57,41 @@ testFormat2 s p f = putStrLn $ case run2 p s of
 
 
 
--- pretty printing -------------------------------------------
+--------------------------------------------------------------
+-- * Pretty Printers
 --------------------------------------------------------------
 
 
--- Comments --------------------------------------------------
+-- ** Comments
+-----------------------------------------------------
 
--- |returns a shifted Pretty Printed Comment 
-fLineComment :: PrettyPrinter Comment
-fLineComment conf@(Config it n _ _ _) c cm = indent it n c ++ fComment conf c cm
-
--- |returns a Pretty Printed Comment
+-- |Returns a pretty printed comment.
 fComment :: PrettyPrinter Comment
 fComment (Config _ _ _ _ nls) _ c = "//" ++ c ++ newline_ nls
 
--- |returns a Pretty Printed Comment with 1 additional Space
-fComment_ :: PrettyPrinter Comment 
-fComment_ conf c cm = " " ++ fComment conf c cm
+-- |Returns an indented pretty printed comment.
+fLineComment :: PrettyPrinter Comment
+fLineComment conf@(Config it n _ _ _) c cm = indent it n c ++ fComment conf c cm
 
--- |return a Pretty Printed Comment or a new line
+-- |Returns a pretty printed comment with one leading space.
+_fComment :: PrettyPrinter Comment 
+_fComment conf c cm = " " ++ fComment conf c cm
+
+-- |Returns a pretty printed comment or a space.
 fOptionalComment :: PrettyPrinter [Comment]
 fOptionalComment conf@(Config _ _ _ _ nls) c cs = if null cs 
                                                     then " "
-                                                    else fComment_ conf c (head cs)
+                                                    else _fComment conf c (head cs)
 
--- |return a Pretty Printed Comment or a new line
+-- |Returns a pretty printed comment or a new line.
 fOptionalComment_ :: PrettyPrinter [Comment]
 fOptionalComment_ conf@(Config _ _ _ _ nls) c cs = if null cs 
                                                     then newline_ nls 
-                                                    else fComment_ conf c (head cs)
+                                                    else _fComment conf c (head cs)
 
--- |returns a list of passed comments or a space based on the boolean
+-- |If the comment list is empty or the configuration option "keepAllComments" is false: Return an empty string.
+-- 
+-- Otherwise: Return a pretty printed sequence of comments (with a leading space, if the Bool value is True).
 fComments' :: Bool -> PrettyPrinter [Comment]
 fComments' _ _ _ []                              = ""
 fComments' _ (Config _ _ _ False _) _ _          = ""
@@ -142,19 +99,26 @@ fComments' s conf@(Config it n _ _ _) c (cm:cms) = if s then " " else ""
                                                    ++ fComment conf c cm 
                                                    ++ concatMap (fLineComment conf c) cms
                                                    ++ indent it n c
--- |calls fComments' with the bool value false
+
+-- |Calls fComments' with the Bool value False.
 fComments :: PrettyPrinter [Comment]
 fComments conf c cms = fComments' False conf c cms
 
--- |calls fComments' with the bool value true
+-- |Calls fComments' with the Bool value True.
 fComments_ :: PrettyPrinter [Comment]
 fComments_ conf c cms = fComments' True conf c cms
 
--- Programm ---------------------------------------------------
 
--- |runs through the whole AST Structure and returns a Pretty Printed String
+
+-- ** AST nodes
+-----------------------------------------------------
+
+-- Program ----------------------------------------------------
+
+-- |Traverses the whole AST and returns the pretty printed source code of an SPL program.
 fProgram :: PrettyPrinter Program
 fProgram conf@(Config it n _ _ _) c (Program gl) = concatMap (fGlobalDeclaration conf c) gl
+
 
 -- GlobalDeclarations -----------------------------------------
 
@@ -196,6 +160,7 @@ fGlobalDeclaration conf@(Config it n _ _ nls) c (ProcedureDeclaration i p v s, c
 fGlobalDeclaration conf@(Config _ _ _ _ nls) _ (GlobalEmptyLine, _)               = newline_ nls
 fGlobalDeclaration conf c (GlobalComment s, _)                                    = fLineComment conf c s   
 
+
 -- TypeExpressions --------------------------------------------
 
 fTypeExpression :: PrettyPrinter (Commented TypeExpression)
@@ -216,8 +181,10 @@ fTypeExpression conf@(Config it n _ _ _) c (ArrayTypeExpression s t, css) = "arr
                                                                             ++ "of "
                                                                             ++ fComments conf c (css !! 4)
                                                                             ++ fTypeExpression conf c t                                            
-                                                            
+
+
 -- ParameterDeclaration ---------------------------------------
+
 fParameterDeclarations :: PrettyPrinter [(Commented ParameterDeclaration)]
 fParameterDeclarations _ _ []                         = ""
 fParameterDeclarations conf@(Config it n _ _ _) c [p] = fParameterDeclaration conf c p
@@ -235,6 +202,7 @@ fParameterDeclaration conf@(Config it n _ _ _) c (ParameterDeclaration s t b, cs
                                                                                   ++ fComments conf c (css !! 2)
                                                                                   ++ fTypeExpression conf c t
 
+
 -- VariableDeclaration ----------------------------------------
 
 fVariableDeclaration :: PrettyPrinter (Commented VariableDeclaration)
@@ -250,8 +218,10 @@ fVariableDeclaration conf@(Config it n _ _ _) c (VariableDeclaration s t, css) =
                                                                                  ++ ";"
                                                                                  ++ fOptionalComment_ conf c (css !! 3)
 fVariableDeclaration conf c (VariableDeclarationComment cs, _) = fLineComment conf c cs                                                                              
-                                                                             
+
+
 -- Statements -------------------------------------------------
+
 fStatement_ :: PrettyPrinter (Commented Statement)
 fStatement_ conf c s@(StatementEmptyLine, _)                      = fStatement conf c s
 fStatement_ conf@(Config it n _ _ _) c s                          = indent it n c 
@@ -312,6 +282,9 @@ fElse conf@(Config it n _ _ _)  c (Just stmd, cs) = "else "
                                                   ++ fComments conf c cs
                                                   ++ fStatement conf c stmd
 
+-- |Returns the pretty printed head of a conditional statement
+--
+-- For the head of an if-statement: provide "if" as the first argument. For the head of a while statement: provide "while" as the first argument.
 fConditionHead :: String -> PrettyPrinter (Commented Expression, [[Comment]])
 fConditionHead s conf@(Config it n _ _ _) c (e, css) = s
                                                        ++ " "
@@ -323,6 +296,12 @@ fConditionHead s conf@(Config it n _ _ _) c (e, css) = s
                                                        ++ ") "
                                                        ++ fComments conf c (css !! 2)  
 
+-- |Takes a Bool argument and returns a pretty printed compound statement in one of two versions.
+--
+-- Usually, a statement is immediately followed by a newline (or a comment), but there is one exception: An if-statement with a compound statement
+-- followed by an else-statement. In this case, the closing curly brace of the compound statement is supposed to be followed by the "else"-keyword 
+-- in the same line. If the first argument is True, the compound statement is printed in the usual way, otherwise it is printed in the context of an
+-- if-else-block.
 fCurlyStatement :: Bool -> PrettyPrinter (Commented Statement)
 fCurlyStatement b conf@(Config it n _ _ _) c (CompoundStatement sts, css) = 
                                                         "{"
@@ -353,6 +332,7 @@ fBracketExpression conf c (expr, css) = "["
                                         ++ "]"
                                         ++ noSpaceIfEmpty (last css)
                                         ++ fComments conf c (last css )
+
 
 -- Expressions ------------------------------------------------
 
@@ -393,8 +373,7 @@ fCommaExpression conf c (e, css)                        = ", "
                                                           ++ fExpression conf c (e, tail css)
 
 
-
--- Operator ---------------------------------------------------
+-- Operators --------------------------------------------------
 
 fOperator :: PrettyPrinter (Commented Op)
 fOperator conf c (op, css) = showOp op
@@ -404,3 +383,60 @@ fOperator conf c (op, css) = showOp op
 fOperator_ :: PrettyPrinter (Commented Op)
 fOperator_ conf c opC      = " "
                           ++ fOperator conf c opC
+
+                    
+
+--------------------------------------------------------------
+-- * Utility functions
+--------------------------------------------------------------
+
+-- |Returns a specific number of tabs or spaces depending on the configuration parameter and the indentation level.
+indent :: IndentationType -> IndentationLevel -> Int -> String 
+indent it n c = replicate (n * c) $ case it of 
+                                      Space -> ' '
+                                      Tab   -> '\t'
+
+-- |Returns a new line based depending on the configuration parameter.
+newline_ :: NewLineStyle -> String 
+newline_ nls = case nls of
+                 Linux      -> "\n"
+                 Windows    -> "\r\n"
+                 ClassicMac -> "\r"
+
+-- |Converts an operator into a printable symbol.
+showOp :: Op -> String
+showOp Lt    = "<" 
+showOp Ne    = "#"
+showOp Plus  = "+"
+showOp Slash = "/"
+showOp Star  = "*"
+showOp Gt    = ">"
+showOp Le    = "<="
+showOp Minus = "-"
+showOp Ge    = ">="
+showOp Eq    = "=" 
+
+-- |Returns an IntLiteral string.
+showIntLiteral :: String -> String
+showIntLiteral "'\n'" = "'\\n'"
+showIntLiteral s = s
+
+-- |If the list is empty then return a, otherwise b.
+ifEmptyElse :: [a] -> b -> b -> b 
+ifEmptyElse xs a b = if null xs then a else b
+
+-- |If the passed list is empty, then return a space, otherwise an empty string.
+spaceIfEmpty :: [a] -> String
+spaceIfEmpty xs = ifEmptyElse xs " " ""
+
+-- |If the passed list is empty, then return an empty string, otherwise a space.
+noSpaceIfEmpty :: [a] -> String
+noSpaceIfEmpty xs = ifEmptyElse xs "" " "
+
+-- |If the passed list is empty, then return a new line.
+newLineIfEmpty :: [a] -> NewLineStyle -> String
+newLineIfEmpty xs nls = ifEmptyElse xs (newline_ nls) ""
+
+-- |Returns the last comment list of a Commented value.
+peekLastComment :: Commented a -> [Comment]
+peekLastComment (_, css) = last css

@@ -1,12 +1,27 @@
 {-|
 Module      : SPLAbsyn
-Description : SPL-AST structure.
+Description : Abstract syntax
 
-This module provides the SPL-AST structure, extended with comments.
+This module provides the SPL-AST types. These AST types differ from ordinary AST types, as they have a "slot" 
+for comments and empty lines appearing in the source code.
 -}
 
 module SPLAbsyn where
 
+
+-- |Type alias for an AST node along with the comments belonging to it. 
+--
+-- The location of the comments in the source code determines the position in the list. This is useful for the pretty printing step.
+type Commented a = (a, [[Comment]])
+
+type Comment = String
+
+type IntString = String
+
+data Op = Lt | Ne | Asgn | Plus | Slash | Star | Gt | Le | Minus | Ge | Eq
+          deriving (Eq, Show)
+
+-- * Abstract Syntax
 data Program              = Program [Commented GlobalDeclaration]
                           deriving (Eq, Show)
 data GlobalDeclaration    = TypeDeclaration String (Commented TypeExpression)
@@ -41,10 +56,3 @@ data Expression           = VariableExpression (Commented Variable)
                           | Negative (Commented Expression)
                           | Positive (Commented Expression)
                           deriving (Eq, Show)
-
-type Commented a = (a, [[Comment]])
-type Comment = String
-type IntString = String
-
-data Op = Lt | Ne | Asgn | Plus | Slash | Star | Gt | Le | Minus | Ge | Eq
-          deriving (Eq, Show)
