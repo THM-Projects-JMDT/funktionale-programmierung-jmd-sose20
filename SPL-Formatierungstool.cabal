@@ -12,12 +12,12 @@ maintainer:          jannik.lapp@mni.thm.de, max.stephan@mni.thm.de, david.marts
 -- copyright:           
 -- category:            
 build-type:          Simple
-extra-source-files:  ChangeLog.md, README.md, SPLParser.hs, SPLAbsyn.hs
+extra-source-files:  ChangeLog.md, README.md, Parser.hs, Absyn.hs, Formatter.hs
 cabal-version:       >=1.10
 
 executable SPL-Formatierungstool
   main-is:             Main.hs
-  -- other-modules:    SPLParser.hs, SPLAbsyn.hs 
+  -- other-modules:    Parser.hs, Absyn.hs, Formatter.hs
   -- other-extensions:    
   build-depends:       base >=4.9 && <4.10, parsec >=3.1 && <3.2
   hs-source-dirs:      src

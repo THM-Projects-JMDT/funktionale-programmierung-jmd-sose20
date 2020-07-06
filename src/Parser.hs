@@ -1,5 +1,5 @@
 {-|
-Module      : SPLParser
+Module      : Parser
 Description : A Parser for SPL.
 
 This module provides functions for parsing SPL source code into an AST-representation.
@@ -7,13 +7,13 @@ The functions are based on monadic parser combinators provided by the Parsec lib
 -}
 
 
-module SPLParser where
+module Parser where
 
 import Text.Parsec
 import Text.Parsec.Expr
 import Data.Char
 
-import SPLAbsyn
+import Absyn
 
 
 ----------------------------------------------------

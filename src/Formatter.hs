@@ -1,15 +1,15 @@
 {-|
-Module      : SPLFormatter
+Module      : Formatter
 Description : Pretty Printer for the SPL-AST.
 
 This module provides functions for converting an SPL-AST structure into a pretty printed string.
 -}
 
-module SPLFormatter where
+module Formatter where
 
-import SPLAbsyn
+import Absyn
 import Text.Parsec
-import SPLParser
+import Parser
 
 
 -- |This type encapsulates the different configuration options for the pretty printing functions.

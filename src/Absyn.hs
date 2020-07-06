@@ -1,12 +1,12 @@
 {-|
-Module      : SPLAbsyn
+Module      : Absyn
 Description : Abstract syntax
 
 This module provides the SPL-AST types. These AST types differ from ordinary AST types, as they have a "slot" 
 for comments and empty lines appearing in the source code.
 -}
 
-module SPLAbsyn where
+module Absyn where
 
 
 -- |Type alias for an AST node along with the comments belonging to it. 
