@@ -44,6 +44,7 @@ unitTests = testGroup "Unit tests"
   testWhileStmtWithComSimple
    ]
 
+-- IntLiteral Formatter tests -----------------------
 
 testIntLit = testCase "" $
   let expected = "5"
@@ -62,6 +63,9 @@ testIntLitWithComSimple = testCase "" $
       actual = testFormatSimple fExpression (IntLiteral "5",[["A"]])
   in 
     assertEqual "" expected actual
+
+
+-- Expressions Formatter tests -----------------------
 
 testNamedVariable = testCase "" $
   let expected = "x"
@@ -92,6 +96,8 @@ testArrayAccessWithCom = testCase "" $
       actual = testFormat fExpression (BinaryExpression (Plus,[[]]) (VariableExpression (NamedVariable "x",[[" A "]]),[[]]) (IntLiteral "45",[[]]),[[],[]])
   in 
     assertEqual "" expected actual
+
+-- Global Declaritions Formatter tests -----------------------
 
 testTypeDec = testCase "" $
   let expected = "type myInt = int;\n"
@@ -128,6 +134,9 @@ testProDecWithCom = testCase "" $
       actual = testFormat fGlobalDeclaration (ProcedureDeclaration "hide" [] [] [(EmptyStatement,[[]])],[[],[],["ich"],["bin"],["ein"],["Kommentar"]])
   in 
     assertEqual "" expected actual 
+
+
+-- Statement and Varible Declaritons Formatter tests -----------------------
 
 testVarDec = testCase "" $
   let expected = "var i: int;\n"
@@ -188,6 +197,8 @@ testWhileStmtWithComSimple = testCase "" $
       actual = testFormatSimple fStatement (WhileStatement (BinaryExpression (Le,[[]]) (VariableExpression (NamedVariable "n",[[]]),[[]]) (IntLiteral "10",[[]]),[[],[]]) (CompoundStatement [(AssignStatement (NamedVariable "i",[[]]) (IntLiteral "10",[[]]),[[],["XXX"]])],[[],[]]),[[],[],[]])
   in 
     assertEqual "" expected actual
+
+-- utility functions -----------------------------    
 
 testConfig = Config Space 2 False True Linux
 testConfigSimple = Config Space 2 False False Linux
