@@ -25,7 +25,7 @@ Das **SPL Formatierungstool** ist es ein Programm zur [Quelltextformatierung](ht
 
 _Mit Cabal Starten_: 
   
-  `cabal v2-run SPL-Formatierungstool -- "spl-code"` 
+  `cabal v2-run splf -- "spl-code"` 
    
   > `Spl-code` muss durch den Source Code des SPL Programms ersetzt werden.
 
@@ -34,11 +34,11 @@ _Programm Bauen und Starten_:
   1. `cabal v2-build`
   2. In dem `dist-newstyle/build` Odner befindet sich nun das gebaut Programm.
    
-   > Das Programm befindet sich in einigen unter Odnern, diese sind je nach Betriebsystem und ghci version unterschiedlich
+   > Das Programm befindet sich in einigen unter Odnern, diese sind je nach Betriebsystem und `GHC` version unterschiedlich
   3. In den in Schritt `2` beschriebenen Ordner wechseln.
   4. Starten:
-     - Windows: `SPL-Formatierungstool "spl-code"`
-     - Linux: `./SPL-Formatierungstool "spl-code"`
+     - Windows: `splf "spl-code"`
+     - Linux: `./splf "spl-code"`
   
   > `Spl-code` muss durch den Source Code des SPL Programms ersetzt werden.
 
