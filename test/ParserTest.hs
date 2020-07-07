@@ -25,12 +25,31 @@ unitTests = testGroup "Unit tests"
     testIdentOnlyUnderscore,
     testIdentStartsWithLowerCase,
     testIdentStartsWithUpperCase,
+    testBiExpr,
+    testdoubleBiExpr,
     testIdentStartsWithNum,
     testComment,
     testCommentInsideComment,
     testComments,
     testTypeDeclaration,
-    testTypeDeclarationWithComments ]
+    testTypeDeclarationWithComments,
+    testNamedTypExpr,
+    testArrTypExpr,
+    testArrTypExprWithCom,
+    testNamedVar,
+    testArrAccess,
+    testSimProDec,
+    testProDec,
+    testVarDec,
+    testVarDecWithCom,
+    testAssStmt,
+    testCallStmt,
+    testWhileStmt,
+    testIfStmt,
+    testElseStmt,
+    testEmptStmt,
+    testComStmt
+    ]
 
 
 -- IntLiteral Parser tests -----------------------
@@ -89,6 +108,21 @@ testIdentStartsWithLowerCase = testCase "" $
   in 
     assertEqual "" expected actual
 
+-- Binary Expression Parser tests --------------------------    
+
+testBiExpr= testCase "" $ 
+  let expected = Right $ (BinaryExpression (Plus,[[]]) (IntLiteral "5",[[]]) (IntLiteral "5",[[]]),[[],[]])
+      actual   = run pExpression "5+5"
+  in 
+    assertEqual "" expected actual
+
+
+testdoubleBiExpr= testCase "" $ 
+  let expected = Right $ (BinaryExpression (Lt,[[]]) (BinaryExpression (Plus,[[]]) (IntLiteral "5",[[]]) (IntLiteral "5",[[" A "]]),[[],[" A "]]) (Negative (IntLiteral "20",[[]]),[[]]),[[],[" A "],[]])
+      actual   = run pExpression "5+5 // A \n < -20"
+  in 
+    assertEqual "" expected actual
+
 
 -- Comment Parser tests --------------------------
 
@@ -126,6 +160,127 @@ testTypeDeclarationWithComments = testCase "" $
       actual   = run pTypeDeclaration input
   in 
     assertEqual "" expected actual
+
+-- Type Expression Parser tests
+
+testNamedTypExpr= testCase "" $ 
+  let input = "int"
+      expected = Right $ (NamedTypeExpression "int",[[]])
+      actual   = run pNamedTypeExpression input
+  in 
+    assertEqual "" expected actual
+
+testArrTypExpr= testCase "" $ 
+  let input = "array [8] of array [8] of int"
+      expected = Right $ (ArrayTypeExpression "8" (ArrayTypeExpression "8" (NamedTypeExpression "int",[[]]),[[],[],[],[],[]]),[[],[],[],[],[]])
+      actual   = run pArrayTypeExpression input
+  in 
+    assertEqual "" expected actual
+
+testArrTypExprWithCom= testCase "" $ 
+  let input = "array [8] of array [8] // A \n of int"
+      expected = Right $ (ArrayTypeExpression "8" (ArrayTypeExpression "8" (NamedTypeExpression "int",[[]]),[[],[],[],[" A "],[]]),[[],[],[],[],[]])
+      actual   = run pArrayTypeExpression input
+  in 
+    assertEqual "" expected actual
+
+-- Variables Parser tests
+testNamedVar= testCase "" $ 
+  let input = "x"
+      expected = Right $ (NamedVariable "x",[[]])
+      actual   = run pVariable input
+  in 
+    assertEqual "" expected actual
+
+testArrAccess= testCase "" $ 
+  let input = "m[-i][8]"
+      expected = Right $ (ArrayAccess (ArrayAccess (NamedVariable "m",[[]]) (Negative (VariableExpression (NamedVariable "i",[[]]),[[]]),[[],[],[]]),[[],[],[]]) (IntLiteral "8",[[],[],[]]),[[],[],[]])
+      actual   = run pVariable input
+  in 
+    assertEqual "" expected actual
+
+-- Procedure Declaritions Parser tests
+
+testSimProDec= testCase "" $ 
+  let input = "proc hide () {;}"
+      expected = Right $ (ProcedureDeclaration "hide" [] [] [(EmptyStatement,[[]])],[[],[],[],[],[],[]])
+      actual   = run pProcedureDeclaration input
+  in 
+    assertEqual "" expected actual
+
+testProDec= testCase "" $ 
+  let input = "proc manyargs(i : int, j : myInt, ref k:tensor, ref l : myInt) {;}"
+      expected = Right $ (ProcedureDeclaration "manyargs" [(ParameterDeclaration "i" (NamedTypeExpression "int",[[]]) False,[[],[],[]]),(ParameterDeclaration "j" (NamedTypeExpression "myInt",[[]]) False,[[],[],[],[]]),(ParameterDeclaration "k" (NamedTypeExpression "tensor",[[]]) True,[[],[],[],[]]),(ParameterDeclaration "l" (NamedTypeExpression "myInt",[[]]) True,[[],[],[],[]])] [] [(EmptyStatement,[[]])],[[],[],[],[],[],[]])
+      actual   = run pProcedureDeclaration input
+  in 
+    assertEqual "" expected actual
+
+-- Variable Declaritions Parser tests
+
+testVarDec= testCase "" $ 
+  let input = "var i : int;"
+      expected = Right $ (VariableDeclaration "i" (NamedTypeExpression "int",[[]]),[[],[],[],[]])
+      actual   = run pVariableDeclaration input
+  in 
+    assertEqual "" expected actual
+
+testVarDecWithCom= testCase "" $ 
+  let input = "var i // Kommentar \n : int;"
+      expected = Right $ (VariableDeclaration "i" (NamedTypeExpression "int",[[]]),[[],[" Kommentar "],[],[]])
+      actual   = run pVariableDeclaration input
+  in 
+    assertEqual "" expected actual
+
+-- Statement Parser tests
+
+testAssStmt= testCase "" $ 
+  let input = "i := 1-2-3;"
+      expected = Right $ (AssignStatement (NamedVariable "i",[[]]) (BinaryExpression (Minus,[[]]) (BinaryExpression (Minus,[[]]) (IntLiteral "1",[[]]) (IntLiteral "2",[[]]),[[],[]]) (IntLiteral "3",[[]]),[[],[],[]]),[[],[]])
+      actual   = run pStatement input
+  in 
+    assertEqual "" expected actual
+
+testCallStmt= testCase "" $ 
+  let input = "ausgabe(1);"
+      expected = Right $ (CallStatement "ausgabe" [(IntLiteral "1",[[]])],[[],[],[],[]])
+      actual   = run pStatement input
+  in 
+    assertEqual "" expected actual
+
+testWhileStmt= testCase "" $ 
+  let input = "while (i<=3) {;}"
+      expected = Right $ (WhileStatement (BinaryExpression (Le,[[]]) (VariableExpression (NamedVariable "i",[[]]),[[]]) (IntLiteral "3",[[]]),[[],[]]) (CompoundStatement [(EmptyStatement,[[]])],[[],[]]),[[],[],[]])
+      actual   = run pStatement input
+  in 
+    assertEqual "" expected actual
+
+testIfStmt= testCase "" $ 
+  let input = "if (i=j) ;"
+      expected = Right $  (IfStatement (BinaryExpression (Eq,[[]]) (VariableExpression (NamedVariable "i",[[]]),[[]]) (VariableExpression (NamedVariable "j",[[]]),[[]]),[[],[]]) (EmptyStatement,[[]]) Nothing,[[],[],[],[]])
+      actual   = run pStatement input
+  in 
+    assertEqual "" expected actual
+
+testElseStmt= testCase "" $ 
+  let input =  "if (i=j) ; else ;"
+      expected = Right $ (IfStatement (BinaryExpression (Eq,[[]]) (VariableExpression (NamedVariable "i",[[]]),[[]]) (VariableExpression (NamedVariable "j",[[]]),[[]]),[[],[]]) (EmptyStatement,[[]]) (Just (EmptyStatement,[[]])),[[],[],[],[]])
+      actual   = run pStatement input
+  in 
+    assertEqual "" expected actual  
+
+testEmptStmt= testCase "" $ 
+  let input = ";"
+      expected = Right $ (EmptyStatement,[[]])
+      actual   = run pStatement input
+  in 
+    assertEqual "" expected actual    
+
+testComStmt= testCase "" $ 
+  let input = "// Ich bin Kommentar \n"
+      expected = Right $ (StatementComment " Ich bin Kommentar ",[])
+      actual   = run pStatement input
+  in 
+    assertEqual "" expected actual  
 
 
 -- utility functions -----------------------------
