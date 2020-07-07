@@ -6,6 +6,8 @@ import           Parser
 import           Text.Parsec.Token
 import           Text.Parsec
 import           Text.Parsec.Language
+import qualified Options.Applicative as O
+import           Data.Semigroup ((<>))
 
 main :: IO ()
 main = do
@@ -20,3 +22,6 @@ removeEscaped s = case runParser p () "" ("\"" ++ s ++ "\"") of
   Right r   -> r
 
 p = stringLiteral $ makeTokenParser haskellDef
+
+f :: O.Parser String
+f = undefined
