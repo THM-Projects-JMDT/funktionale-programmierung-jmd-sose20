@@ -10,7 +10,6 @@ import           Text.Parsec.Language
 main :: IO ()
 main = do
   args <- getArgs
-  print (removeEscaped $ head args)
   putStr $ case run2 pProgram (removeEscaped $ head args) of
     Left  err -> error (show err)
     Right r   -> fProgram defaultConfig 0 r

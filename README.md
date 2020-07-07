@@ -14,8 +14,8 @@ Das **SPL Formatierungstool** ist es ein Programm zur [Quelltextformatierung](ht
 
 _Benötigte Software_:
 
-- ghci <!--TODO Version-->
-- cabal <!--TODO Version-->
+- `ghci 8.0.*`
+- `cabal >= 3.0.*`
 
 _Programm Starten_:
 
