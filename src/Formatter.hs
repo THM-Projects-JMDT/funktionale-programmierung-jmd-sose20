@@ -16,7 +16,7 @@ import Parser
 data Config = Config {
     indentType :: IndentationType,
     indentNum :: Int,
-    leftCurlNextLine :: Bool,
+    removeUnnecessarySigns :: Bool,
     keepAllComments :: Bool,
     newLineType :: NewLineStyle
 } deriving (Eq, Show)
@@ -45,7 +45,7 @@ type IndentationLevel = Int
 -- for testing -----------------------------------------------
 --------------------------------------------------------------
 
-defaultConfig = Config Space 2 False True Linux
+defaultConfig = Config Space 2 True True Linux
 
 run2 :: Parser a -> String -> Either ParseError a
 run2 p = runParser p () ""
@@ -115,7 +115,7 @@ fComments_ conf c cms = fComments' True conf c cms
 
 -- Program ----------------------------------------------------
 
--- |Traverses the whole AST and returns the pretty printed source code of an SPL program.
+-- |Returns the pretty printed source code of an SPL program by traversing its underlying AST.
 fProgram :: PrettyPrinter Program
 fProgram conf@(Config it n _ _ _) c (Program gl) = concatMap (fGlobalDeclaration conf c) gl
 
@@ -123,40 +123,42 @@ fProgram conf@(Config it n _ _ _) c (Program gl) = concatMap (fGlobalDeclaration
 -- GlobalDeclarations -----------------------------------------
 
 fGlobalDeclaration :: PrettyPrinter (Commented GlobalDeclaration)
-fGlobalDeclaration conf@(Config it n _ _ _) c (TypeDeclaration s t, css)          = indent it n c
-                                                                                    ++ "type "
-                                                                                    ++ fComments conf c (head css)
-                                                                                    ++ s
-                                                                                    ++ " "
-                                                                                    ++ fComments conf c (css !! 1)
-                                                                                    ++ "= "
-                                                                                    ++ fComments conf c (css !! 2)
-                                                                                    ++ fTypeExpression conf c t
-                                                                                    ++ ";"
-                                                                                    ++ fOptionalComment_ conf c (css !! 3)
+fGlobalDeclaration conf@(Config it n _ _ _) c (TypeDeclaration s t, css) = 
+            indent it n c                  
+            ++ "type "
+            ++ fComments conf c (head css)
+            ++ s
+            ++ " "
+            ++ fComments conf c (css !! 1)
+            ++ "= "
+            ++ fComments conf c (css !! 2)
+            ++ fTypeExpression conf c t
+            ++ ";"
+            ++ fOptionalComment_ conf c (css !! 3)
 fGlobalDeclaration conf@(Config it n _ _ nls) c (ProcedureDeclaration i p v s, css) = let c1 = c + 1 in
-                                                                                      indent it n c
-                                                                                   ++ "proc "
-                                                                                   ++ fComments conf c (head css)
-                                                                                   ++ i
-                                                                                   ++ noSpaceIfEmpty (css !! 1)
-                                                                                   ++ fComments conf c (css !! 1)
-                                                                                   ++ "("
-                                                                                   ++ noSpaceIfEmpty (css !! 2)
-                                                                                   ++ fComments conf c (css !! 2)
-                                                                                   ++ fParameterDeclarations conf c1 p
-                                                                                   ++ ") "
-                                                                                   ++ fComments conf c (css !! 3)
-                                                                                   ++ "{"
-                                                                                   ++ noSpaceIfEmpty (css !! 4)
-                                                                                   ++ fComments conf c (css !! 4)
-                                                                                   ++ newLineIfEmpty (css !! 4) nls
-                                                                                   ++ concatMap (fVariableDeclaration conf c1) v
-                                                                                   ++ concatMap (fStatement_ conf c1) s
-                                                                                   ++ indent it n c
-                                                                                   ++ "}"
-                                                                                   ++ noSpaceIfEmpty (css !! 5)
-                                                                                   ++ fOptionalComment_ conf c (css !! 5)
+            indent it n c
+            ++ "proc "
+            ++ fComments conf c (head css)
+            ++ i
+            ++ noSpaceIfEmpty (css !! 1)
+            ++ fComments conf c (css !! 1)
+            ++ "("
+            ++ noSpaceIfEmpty (css !! 2)
+            ++ fComments conf c (css !! 2)
+            ++ fParameterDeclarations conf c1 p
+            ++ ") "
+            ++ fComments conf c (css !! 3)
+            ++ "{"
+            ++ noSpaceIfEmpty (css !! 4)
+            ++ fComments conf c (css !! 4)
+            ++ newLineIfEmpty (css !! 4) nls
+            ++ concatMap (fVariableDeclaration conf c1) v
+            ++ concatMap (fStatement_ conf c1) s
+            ++ indent it n c
+            ++ "}"
+            ++ noSpaceIfEmpty (css !! 5)
+            ++ fOptionalComment_ conf c (css !! 5)
+
 fGlobalDeclaration conf@(Config _ _ _ _ nls) _ (GlobalEmptyLine, _)               = newline_ nls
 fGlobalDeclaration conf c (GlobalComment s, _)                                    = fLineComment conf c s   
 
@@ -356,8 +358,7 @@ fExpression conf c (Negative expr, css)                 = showOp Minus
                                                           ++ noSpaceIfEmpty (head css)
                                                           ++ fComments conf c (head css)
                                                           ++ fExpression conf c expr
-fExpression conf c (Positive expr, css)                 = showOp Plus
-                                                          ++ noSpaceIfEmpty (head css)
+fExpression conf@(Config _ _ ks _ _) c (Positive expr, css) = (if ks then showOp Plus ++ noSpaceIfEmpty (head css) else "")
                                                           ++ fComments conf c (head css)
                                                           ++ fExpression conf c expr     
 
