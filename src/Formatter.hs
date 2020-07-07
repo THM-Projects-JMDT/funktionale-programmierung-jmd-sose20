@@ -18,7 +18,7 @@ data Config = Config {
     indentNum :: Int,
     removeUnnecessarySigns :: Bool,
     keepAllComments :: Bool,
-    newLineType :: NewLineStyle
+    newLineType :: NewlineEncoding
 } deriving (Eq, Show)
 
 -- |An indentation can be a sequence of spaces or a sequence of tabs - this type encapsulates these two options.
@@ -27,7 +27,7 @@ data IndentationType = Space
                      deriving (Eq, Show)
 
 -- |Different operating systems use different new line characters ('\n', '\r\n', '\r') - this type encapsulates the different options.
-data NewLineStyle = Linux
+data NewlineEncoding = Linux
                   | Windows
                   | ClassicMac
                   deriving (Eq, Show)
@@ -411,7 +411,7 @@ indent it n c = replicate (n * c) $ case it of
   Tab   -> '\t'
 
 -- |Returns a new line based depending on the configuration parameter.
-newline_ :: NewLineStyle -> String
+newline_ :: NewlineEncoding -> String
 newline_ nls = case nls of
   Linux      -> "\n"
   Windows    -> "\r\n"
@@ -448,7 +448,7 @@ noSpaceIfEmpty :: [a] -> String
 noSpaceIfEmpty xs = ifEmptyElse xs "" " "
 
 -- |If the passed list is empty, then return a new line.
-newLineIfEmpty :: [a] -> NewLineStyle -> String
+newLineIfEmpty :: [a] -> NewlineEncoding -> String
 newLineIfEmpty xs nls = ifEmptyElse xs (newline_ nls) ""
 
 -- |Returns the last comment list of a Commented value.
