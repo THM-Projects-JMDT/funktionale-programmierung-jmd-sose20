@@ -3,8 +3,8 @@ module Main where
 import Test.Tasty (defaultMain, testGroup)
 import Test.Tasty.HUnit (assertEqual, assertBool, testCase)
 import Text.Parsec 
-import SPLAbsyn
-import SPLParser
+import Absyn
+import Parser
 
 {-
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
