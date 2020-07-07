@@ -15,11 +15,11 @@ build-type:          Simple
 extra-source-files:  ChangeLog.md, README.md, Parser.hs, Absyn.hs, Formatter.hs
 cabal-version:       >=1.10
 
-executable SPL-Formatierungstool
+executable splf
   main-is:             Main.hs
   -- other-modules:    Parser.hs, Absyn.hs, Formatter.hs
   -- other-extensions:    
-  build-depends:       base >=4.9 && <4.10, parsec >=3.1 && <3.2
+  build-depends:       base >=4.9 && <4.10, parsec >=3.1 && <3.2, optparse-applicative
   hs-source-dirs:      src
   default-language:    Haskell2010
 
