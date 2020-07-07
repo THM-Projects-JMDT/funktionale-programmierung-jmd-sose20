@@ -21,7 +21,7 @@ Das **SPL Formatierungstool** ist es ein Programm zur [Quelltextformatierung](ht
 
 <!--TODO vtl. allow more base Versions in Cabal file--->
 
-### Programm Starten:
+### Programm starten:
 
 _Mit cabal starten_: 
   
@@ -32,7 +32,7 @@ _Mit cabal starten_:
 _Programm bauen und starten_:
 
   1. `cabal v2-build`
-  2. In dem Ordner `dist-newstyle/build` befindet sich nun das gebaut Programm.
+  2. In dem Ordner `dist-newstyle/build` befindet sich nun das gebaute Programm.
    
    > Das Programm befindet sich in einigen Unterordnern, diese sind je nach Betriebssystem und `GHC`-Version unterschiedlich.
   3. In den in Schritt `2` beschriebenen Ordner wechseln.
