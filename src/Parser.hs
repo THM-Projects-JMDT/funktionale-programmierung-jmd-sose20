@@ -127,9 +127,10 @@ pIdent = do
 pComment :: Parser Comment 
 pComment = try $ do 
   string "//"
-  cs <- manyTill anyChar (try endOfLine)
+  cs <- manyTill anyChar (try $ (endOfLine >> return ()) <|> eof)
   spacesL
   return cs
+
 
 -- |Parses an optional comment and returns an empty list (if there is no comment) or a singleton (if there is one).
 pCommentOptional :: Parser [Comment]
