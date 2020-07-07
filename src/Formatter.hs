@@ -21,12 +21,14 @@ data Config = Config {
     newLineType :: NewlineEncoding
 } deriving (Eq, Show)
 
--- |An indentation can be a sequence of spaces or a sequence of tabs - this type encapsulates these two options.
+-- |An indentation can be a sequence of spaces or a sequence of tabs 
+-- - this type encapsulates these two options.
 data IndentationType = Space
                      | Tab
                      deriving (Eq, Show)
 
--- |Different operating systems use different new line characters ('\n', '\r\n', '\r') - this type encapsulates the different options.
+-- |Different operating systems use different new line character encodings ('\n', '\r\n', '\r') 
+-- - this type encapsulates the different options.
 data NewlineEncoding = Linux
                   | Windows
                   | ClassicMac
