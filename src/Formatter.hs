@@ -76,8 +76,7 @@ fComment conf _ c = "//" ++ c ++ newline_ conf
 
 -- |Returns an indented pretty printed comment.
 fLineComment :: PrettyPrinter Comment
-fLineComment conf c cm =
-  indent conf c ++ fComment conf c cm
+fLineComment conf c cm = indent conf c ++ fComment conf c cm
 
 -- |Returns a pretty printed comment with one leading space.
 _fComment :: PrettyPrinter Comment
@@ -99,9 +98,9 @@ fOptionalComment_ conf c cs =
 -- Otherwise: Return a pretty printed sequence of comments 
 -- (with a leading space, if the Bool value is True).
 fComments' :: Bool -> PrettyPrinter [Comment]
-fComments' _ _                            _ []         = ""
-fComments' _ (     Config _  _ _ False _) _ _          = ""
-fComments' s conf c (cm : cms) = if s
+fComments' _ _                      _ []         = ""
+fComments' _ (Config _ _ _ False _) _ _          = ""
+fComments' s conf                   c (cm : cms) = if s
   then " "
   else
     ""
@@ -127,8 +126,7 @@ fComments_ conf c cms = fComments' True conf c cms
 -- |Returns the pretty printed source code of an SPL program by traversing 
 -- its underlying AST.
 fProgram :: PrettyPrinter Program
-fProgram conf c (Program gl) =
-  concatMap (fGlobalDeclaration conf c) gl
+fProgram conf c (Program gl) = concatMap (fGlobalDeclaration conf c) gl
 
 
 -- GlobalDeclarations -----------------------------------------
@@ -146,33 +144,32 @@ fGlobalDeclaration conf c (TypeDeclaration s t, css) =
     ++ fTypeExpression conf c t
     ++ ";"
     ++ fOptionalComment_ conf c (css !! 3)
-fGlobalDeclaration conf c (ProcedureDeclaration i p v s, css)
-  = let c1 = c + 1
-    in  indent conf c
-          ++ "proc "
-          ++ fComments conf c (head css)
-          ++ i
-          ++ noSpaceIfEmpty (css !! 1)
-          ++ fComments conf c (css !! 1)
-          ++ "("
-          ++ noSpaceIfEmpty (css !! 2)
-          ++ fComments conf c (css !! 2)
-          ++ fParameterDeclarations conf c1 p
-          ++ ") "
-          ++ fComments conf c (css !! 3)
-          ++ "{"
-          ++ noSpaceIfEmpty (css !! 4)
-          ++ fComments conf c (css !! 4)
-          ++ newLineIfEmpty (css !! 4) conf
-          ++ concatMap (fVariableDeclaration conf c1) v
-          ++ concatMap (fStatement_ conf c1)          s
-          ++ indent conf c
-          ++ "}"
-          ++ noSpaceIfEmpty (css !! 5)
-          ++ fOptionalComment_ conf c (css !! 5)
+fGlobalDeclaration conf c (ProcedureDeclaration i p v s, css) =
+  let c1 = c + 1
+  in  indent conf c
+        ++ "proc "
+        ++ fComments conf c (head css)
+        ++ i
+        ++ noSpaceIfEmpty (css !! 1)
+        ++ fComments conf c (css !! 1)
+        ++ "("
+        ++ noSpaceIfEmpty (css !! 2)
+        ++ fComments conf c (css !! 2)
+        ++ fParameterDeclarations conf c1 p
+        ++ ") "
+        ++ fComments conf c (css !! 3)
+        ++ "{"
+        ++ noSpaceIfEmpty (css !! 4)
+        ++ fComments conf c (css !! 4)
+        ++ newLineIfEmpty (css !! 4) conf
+        ++ concatMap (fVariableDeclaration conf c1) v
+        ++ concatMap (fStatement_ conf c1)          s
+        ++ indent conf c
+        ++ "}"
+        ++ noSpaceIfEmpty (css !! 5)
+        ++ fOptionalComment_ conf c (css !! 5)
 
-fGlobalDeclaration conf _ (GlobalEmptyLine, _) =
-  newline_ conf
+fGlobalDeclaration conf _ (GlobalEmptyLine, _) = newline_ conf
 fGlobalDeclaration conf c (GlobalComment s, _) = fLineComment conf c s
 
 
@@ -201,16 +198,17 @@ fTypeExpression conf c (ArrayTypeExpression s t, css) =
 -- ParameterDeclaration ---------------------------------------
 
 fParameterDeclarations :: PrettyPrinter [(Commented ParameterDeclaration)]
-fParameterDeclarations _ _ [] = ""
-fParameterDeclarations conf c [p] =
-  fParameterDeclaration conf c p
+fParameterDeclarations _    _ []  = ""
+fParameterDeclarations conf c [p] = fParameterDeclaration conf c p
 fParameterDeclarations conf c pl =
   fParameterDeclaration conf c (head pl) ++ ", " ++ fParameterDeclarations
-    conf c (tail pl)
+    conf
+    c
+    (tail pl)
 
 fParameterDeclaration :: PrettyPrinter (Commented ParameterDeclaration)
-fParameterDeclaration conf c (ParameterDeclaration s t b, css)
-  = (if b then "ref " else "")
+fParameterDeclaration conf c (ParameterDeclaration s t b, css) =
+  (if b then "ref " else "")
     ++ fComments conf c (head css)
     ++ s
     ++ noSpaceIfEmpty (css !! 1)
@@ -223,8 +221,8 @@ fParameterDeclaration conf c (ParameterDeclaration s t b, css)
 -- VariableDeclaration ----------------------------------------
 
 fVariableDeclaration :: PrettyPrinter (Commented VariableDeclaration)
-fVariableDeclaration conf c (VariableDeclaration s t, css)
-  = indent conf c
+fVariableDeclaration conf c (VariableDeclaration s t, css) =
+  indent conf c
     ++ "var "
     ++ fComments conf c (head css)
     ++ s
@@ -274,15 +272,17 @@ fStatement conf c s@(CompoundStatement _, _) = fCurlyStatement True conf c s
 fStatement conf c (EmptyStatement, css) =
   ";" ++ fOptionalComment_ conf c (head css)
 
-fStatement conf c (IfStatement e s@(CompoundStatement _, _) s'@(Just _), css)
-  = fConditionHead "if" conf c (e, take 3 css)
+fStatement conf c (IfStatement e s@(CompoundStatement _, _) s'@(Just _), css) =
+  fConditionHead "if" conf c (e, take 3 css)
     ++ fCurlyStatement False conf c s
     ++ ifEmptyElse (peekLastComment s) "" (indent conf c)
     ++ fElse conf c (s', css !! 3)
 
 fStatement conf c (IfStatement e s ms, css) =
   fConditionHead "if" conf c (e, take 3 css) ++ fStatement conf c s ++ _fElse
-    conf c (ms, css !! 3)
+    conf
+    c
+    (ms, css !! 3)
 
 fStatement conf c (WhileStatement e s, css) =
   fConditionHead "while" conf c (e, take 3 css) ++ fStatement conf c s
@@ -292,7 +292,7 @@ fStatement conf c (StatementComment s, _) = fComment conf c s
 fStatement conf _ (StatementEmptyLine, _) = newline_ conf
 
 _fElse :: PrettyPrinter (Maybe (Commented Statement), [Comment])
-_fElse conf                     c (Nothing, _) = ""
+_fElse conf c (Nothing, _) = ""
 _fElse conf c s            = indent conf c ++ fElse conf c s
 
 fElse :: PrettyPrinter (Maybe (Commented Statement), [Comment])
@@ -384,9 +384,10 @@ fExpression conf c (Negative expr, css) =
     ++ fComments conf c (head css)
     ++ fExpression conf c expr
 fExpression conf c (Positive expr, css) =
-  (if removeUnnecessarySigns conf 
-    then showOp Plus ++ noSpaceIfEmpty (head css) 
-    else "")
+  (if removeUnnecessarySigns conf
+      then showOp Plus ++ noSpaceIfEmpty (head css)
+      else ""
+    )
     ++ fComments conf c (head css)
     ++ fExpression conf c expr
 
