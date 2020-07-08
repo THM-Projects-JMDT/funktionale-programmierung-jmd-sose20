@@ -78,7 +78,7 @@ Ansonsten werden diese einfach entfernt.
 
 **`--nls ARG`**:
 
-Bestimmt welche/s Zeichen für den **Zeilenumbruch** Verwendet wird/werden.
+Bestimmt welche/s Zeichen für den **Zeilenumbruch** verwendet wird/werden.
 
 - Mögliche werte für `ARG`:
   - `linux`: `\n` (Default)
