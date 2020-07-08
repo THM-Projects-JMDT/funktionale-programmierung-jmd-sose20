@@ -189,16 +189,16 @@ pGlobalComment = do
 
 pTypeDeclaration :: Parser (Commented GlobalDeclaration)
 pTypeDeclaration = do 
-  pType >> spacesN
-  cs1 <- pComments 
-  id <- pIdent << spacesN
-  cs2 <- pComments 
-  pEQ >> spacesN
-  cs3 <- pComments
-  tExpr <- pTypeExpression 
-  pSemic >> spacesL
-  cs4 <- pCommentOptional
-  return (TypeDeclaration id tExpr, [cs1, cs2, cs3, cs4])
+  pType >> spacesN -- parse "type" keyword and consume any following spaces
+  cs1 <- pComments  -- parse any number of comments and save them in 'cs1'
+  id <- pIdent << spacesN -- parse an identifier followed by any number of spaces an save it in 'id'
+  cs2 <- pComments -- parse any number of comments and save them in 'cs2'
+  pEQ >> spacesN -- parse "=" and consume any following spaces
+  cs3 <- pComments -- parse any number of comments and save them in 'cs3'
+  tExpr <- pTypeExpression -- parse a TypeExpression and save the result in 'tExpr'
+  pSemic >> spacesL -- parse ";" and consume following spaces in the same line
+  cs4 <- pCommentOptional -- parse a comment that may be attached to the type declaration
+  return (TypeDeclaration id tExpr, [cs1, cs2, cs3, cs4]) -- the result is an AST node containing the parsed values / comments
 
 
 -- TypeExpression ------------------------
