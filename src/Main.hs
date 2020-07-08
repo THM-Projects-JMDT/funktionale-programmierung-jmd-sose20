@@ -23,7 +23,7 @@ main = do
 -------------------------------------------------------------------------------
 
 -- |Uses functions from the optparse-applicative library <https://hackage.haskell.org/package/optparse-applicative> 
--- for parsing command line options and automatically generating a usage / help text
+-- for parsing command line options and automatically generating a usage description / help text
 cliOpts :: O.Parser (Config, Bool, String) 
 cliOpts = (, ,) 
           <$> config
