@@ -117,17 +117,17 @@ fProgram conf c (Program gl) = concatMap (fGlobalDeclaration conf c) gl
 
 fGlobalDeclaration :: PrettyPrinter (Commented GlobalDeclaration)
 fGlobalDeclaration conf c (TypeDeclaration s t, css) =
-  indent conf c
-    ++ "type "
-    ++ fComments conf c (head css)
-    ++ s
-    ++ " "
-    ++ fComments conf c (css !! 1)
-    ++ "= "
-    ++ fComments conf c (css !! 2)
-    ++ fTypeExpression conf c t
-    ++ ";"
-    ++ fOptionalComment_ conf c (css !! 3)
+  indent conf c -- print indentation (depending on the current indentation level and the configuration)
+    ++ "type " -- print "type "
+    ++ fComments conf c (head css) -- print comments that may have appeared after the "type" keyword in the source code
+    ++ s -- print the identifier of the TypeDeclaration
+    ++ " " -- print a single space
+    ++ fComments conf c (css !! 1) -- print comments that may have appeared after the identifier in the source code
+    ++ "= " -- print "= "
+    ++ fComments conf c (css !! 2) -- print comments that may have appeared after the "=" in the source code
+    ++ fTypeExpression conf c t -- pretty print the TypeExpression belonging to the TypeDeclaration
+    ++ ";" -- print ";"
+    ++ fOptionalComment_ conf c (css !! 3) -- print a comment that may have been attached to the TypeDeclaration
 fGlobalDeclaration conf c (ProcedureDeclaration i p v s, css) =
   let c1 = c + 1
   in  indent conf c
@@ -160,7 +160,7 @@ fGlobalDeclaration conf c (GlobalComment s, _) = fLineComment conf c s
 -- TypeExpressions --------------------------------------------
 
 fTypeExpression :: PrettyPrinter (Commented TypeExpression)
-fTypeExpression conf@(Config it n _ _ _) c (NamedTypeExpression s, css) =
+fTypeExpression conf c (NamedTypeExpression s, css) =
   s ++ noSpaceIfEmpty (head css) ++ fComments conf c (head css)
 fTypeExpression conf c (ArrayTypeExpression s t, css) =
   "array"
