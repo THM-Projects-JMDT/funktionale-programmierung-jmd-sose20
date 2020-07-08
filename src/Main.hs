@@ -11,12 +11,12 @@ import           Data.Semigroup ((<>))
 
 main :: IO ()
 main = do
-  (conf, f, inp) <- O.execParser $ O.info (cliArgs O.<**> O.helper) mempty
+  (conf, f, inp) <- O.execParser $ O.info (cliOpts O.<**> O.helper) mempty
   inp' <- if f 
             then readFile inp
             else return $ removeEscaped inp
   applyFormatter conf inp'
-  
+
 
 -------------------------------------------------------------------------------
 -- CLI arguments
@@ -24,8 +24,8 @@ main = do
 
 -- |Uses functions from the optparse-applicative library <https://hackage.haskell.org/package/optparse-applicative> 
 -- for parsing command line options and automatically generating a usage / help text
-cliArgs :: O.Parser (Config, Bool, String) 
-cliArgs = (, ,) 
+cliOpts :: O.Parser (Config, Bool, String) 
+cliOpts = (, ,) 
           <$> config
           <*> O.switch
             ( O.short 'f'
