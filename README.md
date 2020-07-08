@@ -10,6 +10,13 @@
 
 Das **SPL Formatierungstool** ist es ein Programm zur [Quelltextformatierung](https://de.wikipedia.org/wiki/Quelltextformatierung) der Programmiersprache **SPL** (Simple Programming Languange). **SPL** ist eine Programmiersprache, die an der [THM](https://www.thm.de/site/) für das Modul [Compillerbau](https://www.thm.de/organizer/index.php?option=com_organizer&view=subject_item&id=9) entwickelt wurde.
 
+**Verwendete Haskell Packages:**
+
+- `parsec`
+- `optparse-applicative`
+- `tasty` (Zum Testen)
+- `tasty-hunit` (Zum Testen)
+
 ## Verwendung
 
 ### Benötigte Software:
@@ -94,3 +101,13 @@ in Anführungszeichen gesetzt werden).
 **`-h, --help`**:
 
 Hilfetext anzeigen und Programm beenden.
+
+## Haskell Packages
+
+-  parsec
+-  optparse-applicative
+
+_Testing_:
+
+- tasty 
+- tasty-hunit
