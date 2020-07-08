@@ -12,13 +12,13 @@ import           Data.Semigroup ((<>))
 main :: IO ()
 main = do
   (conf, inp) <- O.execParser $ O.info (cliArgs O.<**> O.helper) O.fullDesc
-  putStr $ case run2 pProgram (removeEscaped $ inp) of
-    Left  err -> error (show err)
+  putStr $ case run2 pProgram (removeEscaped inp) of
+    Left  err -> error ("Parser failed: \n" ++ show err)
     Right r   -> fProgram conf 0 r
 
 removeEscaped :: String -> String
 removeEscaped s = case runParser p () "" ("\"" ++ s ++ "\"") of
-  Left  err -> "Parser failed: " ++ show err
+  Left  err -> error ("Invalid input: \n" ++ show err)
   Right r   -> r
 
 p = stringLiteral $ makeTokenParser haskellDef
