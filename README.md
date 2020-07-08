@@ -101,13 +101,3 @@ in Anführungszeichen gesetzt werden).
 **`-h, --help`**:
 
 Hilfetext anzeigen und Programm beenden.
-
-## Haskell Packages
-
--  parsec
--  optparse-applicative
-
-_Testing_:
-
-- tasty 
-- tasty-hunit
