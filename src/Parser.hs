@@ -157,6 +157,7 @@ pComments = many $ pComment << spacesN
 
 -- Program -------------------------------
 
+-- |Parses SPL source code into the corresponding AST.
 pProgram :: Parser Program
 pProgram = do
   spacesL
