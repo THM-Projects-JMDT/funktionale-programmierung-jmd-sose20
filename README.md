@@ -27,8 +27,8 @@ _Mit cabal starten_:
 
 `cabal v2-run splf -- [args] input`
 
-> - Die Beschreibung für die Argumente(`args`) befindet sich [hier](#programm-einstellungen)
-> - `input` ist Standartmäßig der Quellcode des SPL-Programms, es kann aber auch eine Datei eingelesen werden, hierfür muss man nur ein Argument übergeben (mehr infos siehe [hier](#programm-einstellungen)).
+> - Die Beschreibung für die Argumente (`args`) befindet sich [hier](#programm-einstellungen)
+> - `input` ist standardmäßig der Quellcode des SPL-Programms - es kann aber auch eine Datei eingelesen werden, indem ein Flag gesetzt wird (siehe [hier](#programm-einstellungen)).
 
 _Programm bauen und starten_:
 
@@ -43,7 +43,7 @@ _Programm bauen und starten_:
    - Linux: `./splf [args] input`
 
 > - Die Beschreibung für die Argumente(`args`) befindet sich [hier](#programm-einstellungen)
-> - `input` ist Standartmäßig der Quellcode des SPL-Programms, es kann aber auch eine Datei eingelesen werden, hierfür muss man nur ein Argument übergeben (mehr infos siehe [hier](#programm-einstellungen)).
+> - `input` ist standardmäßig der Quellcode des SPL-Programms - es kann aber auch eine Datei eingelesen werden, indem ein Flag gesetzt wird (siehe [hier](#programm-einstellungen)).
 
 _Tests ausführen_:
 
@@ -51,43 +51,45 @@ _Tests ausführen_:
 
 ### Programm Einstellungen
 
-Folgende Einstellungen Können per **Kommandozeilenargument** eingestellt werden:
+Folgende **Kommandozeilenargumente** stehen zur Konfiguration des Formatierers bereit:
 
 **`--itype ARG`**:
 
-Bestimmt welches Zeichen zur **Einrückung** Verwendet wird.
+Bestimmt, welches Zeichen für **Einrückungen** verwendet wird.
 
-- Mögliche werte für `ARG`:
-  - `s`: für Leerzeichen (Standart)
+- Mögliche Werte für `ARG`:
+  - `s`: für Leerzeichen (Default)
   - `t`: für Tabulator
 
 **`--inum INT`**:
 
-**Anzahl** der **Leerzeichen/Tabs** pro Einrückung.
+**Anzahl** der **Leerzeichen/Tabulatoren** pro Einrückung.
 
-- `INT` kann eine belibige Zahl sein (Standart `2`).
+- `INT` kann eine beliebige Zahl sein (Default: `2`).
 
 **`--rms`**:
 
-Wenn dieses Argument angegeben ist werden alle **nicht Benötigten Vorzeichen entfernt**. (z.B.: `+1` -> `1`)
+Wenn dieses Flag gesetzt ist, werden alle **nicht benötigten Vorzeichen entfernt**. (z.B.: `+1` -> `1`)
 
 **`--kc`**:
 
-Wenn dieses Argument angegeben ist werden alle "**fehlplatzierten Kommentare**" **beibehalten** (Ohne diese Option werden diese Einfach entfernt).
+Wenn dieses Flag gesetzt ist, werden alle "**fehlplatzierten" Kommentare** **beibehalten** .
+Ansonsten werden diese einfach entfernt.
 
 **`--nls ARG`**:
 
 Bestimmt welche/s Zeichen für den **Zeilenumbruch** Verwendet wird/werden.
 
 - Mögliche werte für `ARG`:
-  - `linux`: `\n` (Standart)
+  - `linux`: `\n` (Default)
   - `win`: `\r\n`
   - `mac`: `\r`
 
 **`-f`**:
 
-Wenn dieses Argument angegeben ist wird der inhalt aus der Datei(Dessen Pfad bei `input` angegeben ist) gelesen, und formattiert.
-(Ohne diese Option wird input als String interpretiert der den spl code beinhaltet)
+Wenn dieses Flag gesetzt ist, wird der Inhalt der Datei, deren Pfad bei `input` angegeben ist, eingelesen und formattiert.
+Ansonsten wird `input` direkt als SPL-Code interpretiert (damit Leerzeichen verwendet werden können, muss `ìnput` hierbei  
+in Anführungszeichen gesetzt werden).
 
 **`-h, --help`**:
 
