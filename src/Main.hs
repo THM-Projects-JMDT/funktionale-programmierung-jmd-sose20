@@ -11,17 +11,10 @@ import           Data.Semigroup ((<>))
 
 main :: IO ()
 main = do
-  (conf, inp) <- O.execParser $ O.info (cliArgs O.<**> O.helper) O.fullDesc
-  putStr $ case runParser pProgram () "" (removeEscaped inp) of
-    Left  err -> error ("Parser failed: \n" ++ show err)
-    Right r   -> fProgram conf 0 r
-
-removeEscaped :: String -> String
-removeEscaped s = case runParser p () "" ("\"" ++ s ++ "\"") of
-  Left  err -> error ("Invalid input: \n" ++ show err)
-  Right r   -> r
-
-p = stringLiteral $ makeTokenParser haskellDef
+  (conf, f, inp) <- O.execParser $ O.info (cliArgs O.<**> O.helper) O.fullDesc
+  if f 
+     then readFile inp >>= formatt conf 
+     else formatt conf (removeEscaped inp)
 
 
 -------------------------------------------------------------------------------
@@ -65,8 +58,27 @@ config = Config
             <> O.value Linux
             <> O.help "Newline encoding (\"linux\" => '\\n', \"win\" => '\\r\\n' or \"mac\" => '\\r')" )
   
-cliArgs :: O.Parser (Config, String) 
-cliArgs = (,) 
+cliArgs :: O.Parser (Config, Bool, String) 
+cliArgs = (, ,) 
           <$> config
+          <*> O.switch
+            ( O.short 'f'
+            <> O.help "read Input from file" )
           <*> O.argument O.str (O.metavar "INPUT")
   
+--------------------------------------------------------------
+-- * Utility functions
+--------------------------------------------------------------
+
+removeEscaped :: String -> String
+removeEscaped s = case runParser p () "" ("\"" ++ s ++ "\"") of
+  Left  err -> error ("Invalid input: \n" ++ show err)
+  Right r   -> r
+
+p = stringLiteral $ makeTokenParser haskellDef
+
+formatt :: Config -> String -> IO()
+formatt conf inp =
+   putStr $ case runParser pProgram () "" inp of
+      Left  err -> error ("Parser failed: \n" ++ show err)
+      Right r   -> fProgram conf 0 r
