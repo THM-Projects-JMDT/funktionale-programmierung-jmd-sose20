@@ -10,16 +10,19 @@
 
 Das **SPL Formatierungstool** ist es ein Programm zur [Quelltextformatierung](https://de.wikipedia.org/wiki/Quelltextformatierung) der Programmiersprache **SPL** (Simple Programming Languange). **SPL** ist eine Programmiersprache, die an der [THM](https://www.thm.de/site/) für das Modul [Compillerbau](https://www.thm.de/organizer/index.php?option=com_organizer&view=subject_item&id=9) entwickelt wurde.
 
+**Verwendete Haskell Packages:**
+
+- `parsec`
+- `optparse-applicative`
+- `tasty` (Zum Testen)
+- `tasty-hunit` (Zum Testen)
+
 ## Verwendung
 
 ### Benötigte Software:
 
-- `GHC 8.0.*`
-- `cabal >= 3.0.*`
-
-> Es kann auch eine andere `GHC` version verwendet werden - damit dies funktioniert, muss allerdings die `base` version in der Datei `SPL-Formatierungstool.cabal` angepasst werden.
-
-<!--TODO vtl. allow more base Versions in Cabal file--->
+- `GHC >= 8.0 && <= 8.10`
+- `cabal >= 2.0`
 
 ### Programm starten:
 
@@ -48,6 +51,10 @@ _Programm bauen und starten_:
 _Tests ausführen_:
 
 `cabal v2-test`
+
+_Doku Generieren_:
+
+`cabal v2-haddock --haddock-executables --haddock-html`
 
 ### Programm Einstellungen
 
