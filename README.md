@@ -22,7 +22,7 @@ Das **SPL Formatierungstool** ist es ein Programm zur [Quelltextformatierung](ht
 ### Benötigte Software:
 
 - `GHC 8.0.*`
-- `cabal >= 3.0.*`
+- `cabal >= 2.0.*`
 
 > Es kann auch eine andere `GHC` version verwendet werden - damit dies funktioniert, muss allerdings die `base` version in der Datei `SPL-Formatierungstool.cabal` angepasst werden.
 
@@ -55,6 +55,10 @@ _Programm bauen und starten_:
 _Tests ausführen_:
 
 `cabal v2-test`
+
+_Doku Generieren_:
+
+`cabal v2-haddock --haddock-executables --haddock-html`
 
 ### Programm Einstellungen
 
