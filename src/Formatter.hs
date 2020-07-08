@@ -31,9 +31,9 @@ data IndentationType = Space
 -- ('\n', '\r\n', '\r') 
 -- - this type encapsulates the different options.
 data NewlineEncoding = Linux
-                  | Windows
-                  | ClassicMac
-                  deriving (Eq, Show)
+                     | Windows
+                     | ClassicMac
+                     deriving (Eq, Show)
 
 -- |Base type alias for the pretty printing functions.
 --
@@ -185,10 +185,9 @@ fParameterDeclarations :: PrettyPrinter [(Commented ParameterDeclaration)]
 fParameterDeclarations _    _ []  = ""
 fParameterDeclarations conf c [p] = fParameterDeclaration conf c p
 fParameterDeclarations conf c pl =
-  fParameterDeclaration conf c (head pl) ++ ", " ++ fParameterDeclarations
-    conf
-    c
-    (tail pl)
+  fParameterDeclaration conf c (head pl) 
+    ++ ", " 
+    ++ fParameterDeclarations conf c (tail pl)
 
 fParameterDeclaration :: PrettyPrinter (Commented ParameterDeclaration)
 fParameterDeclaration conf c (ParameterDeclaration s t b, css) =
@@ -263,10 +262,9 @@ fStatement conf c (IfStatement e s@(CompoundStatement _, _) s'@(Just _), css) =
     ++ fElse conf c (s', css !! 3)
 
 fStatement conf c (IfStatement e s ms, css) =
-  fConditionHead "if" conf c (e, take 3 css) ++ fStatement conf c s ++ _fElse
-    conf
-    c
-    (ms, css !! 3)
+  fConditionHead "if" conf c (e, take 3 css) 
+    ++ fStatement conf c s 
+    ++ _fElse conf c (ms, css !! 3)
 
 fStatement conf c (WhileStatement e s, css) =
   fConditionHead "while" conf c (e, take 3 css) ++ fStatement conf c s
@@ -348,7 +346,9 @@ fBracketExpression conf c (expr, css) =
 fExpression :: PrettyPrinter (Commented Expression)
 fExpression conf c (VariableExpression v, _) = fVariable conf c v
 fExpression conf c (IntLiteral i, css) =
-  showIntLiteral i ++ noSpaceIfEmpty (head css) ++ fComments conf c (head css)
+  showIntLiteral i 
+    ++ noSpaceIfEmpty (head css) 
+    ++ fComments conf c (head css)
 fExpression conf c (Parenthesized expr, css) =
   "("
     ++ noSpaceIfEmpty (head css)
@@ -370,8 +370,7 @@ fExpression conf c (Negative expr, css) =
 fExpression conf c (Positive expr, css) =
   (if removeUnnecessarySigns conf
       then showOp Plus ++ noSpaceIfEmpty (head css)
-      else ""
-    )
+      else "")
     ++ fComments conf c (head css)
     ++ fExpression conf c expr
 
