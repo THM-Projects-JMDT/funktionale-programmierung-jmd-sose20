@@ -21,12 +21,8 @@ Das **SPL Formatierungstool** ist es ein Programm zur [Quelltextformatierung](ht
 
 ### Benötigte Software:
 
-- `GHC 8.0.*`
-- `cabal >= 2.0.*`
-
-> Es kann auch eine andere `GHC` version verwendet werden - damit dies funktioniert, muss allerdings die `base` version in der Datei `SPL-Formatierungstool.cabal` angepasst werden.
-
-<!--TODO vtl. allow more base Versions in Cabal file--->
+- `GHC >= 8.0 && <= 8.10`
+- `cabal >= 2.0`
 
 ### Programm starten:
 
