@@ -12,30 +12,27 @@ import           Data.Semigroup ((<>))
 main :: IO ()
 main = do
   (conf, f, inp) <- O.execParser $ O.info (cliArgs O.<**> O.helper) mempty
-  if f 
-     then readFile inp >>= format conf 
-     else format conf (removeEscaped inp)
-
+  inp' <- if f 
+            then readFile inp
+            else return $ removeEscaped inp
+  applyFormatter conf inp'
+  
 
 -------------------------------------------------------------------------------
 -- CLI arguments
 -------------------------------------------------------------------------------
 
-parseIndentType :: O.ReadM IndentationType
-parseIndentType = O.eitherReader $ 
-  \s -> case s of 
-          "s"       -> Right Space
-          "t"       -> Right Tab
-          otherwise -> Left $ "Invalid Indentation type: expected 's' or 't'"
+-- |Uses functions from the optparse-applicative library <https://hackage.haskell.org/package/optparse-applicative> 
+-- for parsing command line options and automatically generating a usage / help text
+cliArgs :: O.Parser (Config, Bool, String) 
+cliArgs = (, ,) 
+          <$> config
+          <*> O.switch
+            ( O.short 'f'
+            <> O.help "read Input from file" )
+          <*> O.argument O.str (O.metavar "INPUT")
 
-parseNewLineEncoding :: O.ReadM NewlineEncoding
-parseNewLineEncoding = O.eitherReader $ 
-  \s -> case s of 
-          "linux"   -> Right Linux
-          "win"     -> Right Windows
-          "mac"     -> Right ClassicMac    
-          otherwise -> Left $ "Invalid newline style: expected 'linux', 'win' or 'mac'"
-
+-- |Command line options parser for the configuration options.
 config :: O.Parser Config 
 config = Config
          <$> O.option parseIndentType
@@ -57,28 +54,38 @@ config = Config
             ( O.long "nls"
             <> O.value Linux
             <> O.help "Newline encoding (\"linux\" => '\\n', \"win\" => '\\r\\n' or \"mac\" => '\\r')" )
-  
-cliArgs :: O.Parser (Config, Bool, String) 
-cliArgs = (, ,) 
-          <$> config
-          <*> O.switch
-            ( O.short 'f'
-            <> O.help "read Input from file" )
-          <*> O.argument O.str (O.metavar "INPUT")
-  
+
+-- |Parser for the indentation type option.
+parseIndentType :: O.ReadM IndentationType
+parseIndentType = O.eitherReader $ 
+  \s -> case s of 
+          "s"       -> Right Space
+          "t"       -> Right Tab
+          otherwise -> Left $ "Invalid indentation type: expected 's' or 't'"
+
+-- |Parser for the newline encoding option.
+parseNewLineEncoding :: O.ReadM NewlineEncoding
+parseNewLineEncoding = O.eitherReader $ 
+  \s -> case s of 
+          "linux"   -> Right Linux
+          "win"     -> Right Windows
+          "mac"     -> Right ClassicMac    
+          otherwise -> Left $ "Invalid newline encoding: expected 'linux', 'win' or 'mac'"
+
+
 --------------------------------------------------------------
 -- * Utility functions
 --------------------------------------------------------------
 
 removeEscaped :: String -> String
-removeEscaped s = case runParser p () "" ("\"" ++ s ++ "\"") of
-  Left  err -> error ("Invalid input: \n" ++ show err)
-  Right r   -> r
+removeEscaped s = let p = stringLiteral $ makeTokenParser haskellDef in 
+  case runParser p () "" ("\"" ++ s ++ "\"") of
+    Left  err -> error ("Invalid input: \n" ++ show err)
+    Right r   -> r
+  
 
-p = stringLiteral $ makeTokenParser haskellDef
-
-format :: Config -> String -> IO()
-format conf inp =
+applyFormatter :: Config -> String -> IO()
+applyFormatter conf inp =
    putStr $ case runParser pProgram () "" inp of
       Left  err -> error ("Parser failed: \n" ++ show err)
       Right r   -> fProgram conf 0 r
