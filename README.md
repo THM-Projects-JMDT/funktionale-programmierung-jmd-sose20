@@ -83,3 +83,7 @@ Bestimmt welche/s Zeichen für den **Zeilenumbruch** Verwendet wird/werden.
   - `linux`: `\n` (Standart)
   - `win`: `\r\n`
   - `mac`: `\r`
+
+**`-h, --help`**:
+
+Hilfetext anzeigen und Programm beenden.
