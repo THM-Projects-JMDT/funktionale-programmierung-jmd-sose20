@@ -369,8 +369,8 @@ fExpression conf c (Negative expr, css) =
     ++ fExpression conf c expr
 fExpression conf c (Positive expr, css) =
   (if removeUnnecessarySigns conf
-      then showOp Plus ++ noSpaceIfEmpty (head css)
-      else "")
+      then ""
+      else showOp Plus ++ noSpaceIfEmpty (head css))
     ++ fComments conf c (head css)
     ++ fExpression conf c expr
 
