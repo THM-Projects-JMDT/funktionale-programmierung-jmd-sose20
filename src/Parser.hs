@@ -306,7 +306,12 @@ pParameterDeclaration = do
 -- Variable Declaration ------------------
 
 pVariableDeclaration :: Parser (Commented VariableDeclaration)
-pVariableDeclaration = try pVariableDeclaration_ <|> pVariableDeclarationComment
+pVariableDeclaration = try pVariableDeclaration_ 
+                   <|> pVariableDeclarationComment 
+                   <|> pVariableEmptyLine
+
+pVariableEmptyLine :: Parser (Commented VariableDeclaration)
+pVariableEmptyLine = endOfLine >> spacesL >> return (VariableDeclarationEmptyLine, [])
 
 pVariableDeclaration_ :: Parser (Commented VariableDeclaration)
 pVariableDeclaration_ = do

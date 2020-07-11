@@ -36,6 +36,7 @@ data ParameterDeclaration = ParameterDeclaration String (Commented TypeExpressio
                           deriving (Eq, Show)
 data VariableDeclaration  = VariableDeclaration String (Commented TypeExpression)
                           | VariableDeclarationComment Comment
+                          | VariableDeclarationEmptyLine
                           deriving (Eq, Show)
 data Statement            = AssignStatement (Commented Variable) (Commented Expression)
                           | CallStatement String [Commented Expression]

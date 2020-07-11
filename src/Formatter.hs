@@ -218,7 +218,8 @@ fVariableDeclaration conf c (VariableDeclaration s t, css) =
     ++ fOptionalComment_ conf c (css !! 3)
 fVariableDeclaration conf c (VariableDeclarationComment cs, _) =
   fLineComment conf c cs
-
+fVariableDeclaration conf c (VariableDeclarationEmptyLine, _) =
+  newline_ conf
 
 -- Statements -------------------------------------------------
 
